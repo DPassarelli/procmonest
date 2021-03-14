@@ -1,0 +1,24 @@
+git:
+  quiet: true
+
+os: linux
+
+language: node_js
+
+node_js:
+  - "14"
+  - "12"
+  - "10"
+
+env:
+  global:
+    - DEBUG=@dpassarelli/procrunest
+
+install:
+  - npm install
+
+script:
+  - npm test
+
+after_success:
+  - npm run cover:report

@@ -1,0 +1,76 @@
+{
+  "name": "@dpassarelli/procrunest",
+  "version": "1.0.0",
+  "description": "A promise-based child process runner to ensure reliable testing of local servers written in JS.",
+  "main": "index.js",
+  "scripts": {
+    "cover:test": "nyc npm run test:unit",
+    "cover:report": "nyc report --reporter=text-lcov | coveralls",
+    "lint": "standard",
+    "test:unit": "mocha",
+    "test": "npm run lint && npm run cover:test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DPassarelli/procrunest.git"
+  },
+  "keywords": [
+    "asynchronous",
+    "child",
+    "process",
+    "promise",
+    "test",
+    "testing"
+  ],
+  "author": "David Passarelli <dpassarelli@camelotcg.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DPassarelli/procrunest/issues"
+  },
+  "homepage": "https://github.com/DPassarelli/procrunest#readme",
+  "mocha": {
+    "reporter": "min",
+    "file": "test/setup.js",
+    "ui": "bdd"
+  },
+  "standard": {
+    "global": [
+      "expect"
+    ]
+  },
+  "nyc": {
+    "check-coverage": true,
+    "exclude": [
+      "**/*.spec.js",
+      "test/"
+    ],
+    "per-file": true,
+    "lines": [
+      85,
+      92
+    ],
+    "statements": [
+      85,
+      92
+    ],
+    "functions": [
+      85,
+      92
+    ],
+    "branches": [
+      85,
+      92
+    ]
+  },
+  "dependencies": {
+    "debug": "^4.3.1"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
+    "coveralls": "^3.1.0",
+    "mocha": "^8.3.2",
+    "nyc": "^15.1.0",
+    "standard": "^16.0.3"
+  }
+}

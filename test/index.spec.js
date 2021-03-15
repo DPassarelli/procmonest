@@ -1,5 +1,7 @@
 /* eslint-env mocha */
 
+const path = require('path')
+
 /**
  * The code under test.
  * @type {any}
@@ -52,6 +54,7 @@ describe('the Procmonrest module', () => {
 
     beforeEach(() => {
       instance = new T({
+        command: `node ${path.join(__dirname, 'commands/sample.js')}`,
         waitFor: /ready/
       })
     })
@@ -63,16 +66,6 @@ describe('the Procmonrest module', () => {
       expect(actual).to.equal(expected)
     })
 
-    describe('the "start" method', () => {
-      it('must return a Promise', () => {
-        const returnValue = instance.start()
-
-        expect(returnValue).to.be.instanceOf(Promise)
-
-        returnValue.catch(() => { /* ignore */ })
-      })
-    })
-
     it('must have a method named "stop"', () => {
       const expected = 'function'
       const actual = typeof instance.stop
@@ -80,13 +73,9 @@ describe('the Procmonrest module', () => {
       expect(actual).to.equal(expected)
     })
 
-    describe('the "stop" method', () => {
-      it('must return a Promise', () => {
-        const returnValue = instance.stop()
-
-        expect(returnValue).to.be.instanceOf(Promise)
-
-        returnValue.catch(() => { /* ignore */ })
+    describe('the "start" method', () => {
+      it('must be resolved when the expected output is found', () => {
+        return instance.start().then(() => { return instance.stop() })
       })
     })
   })

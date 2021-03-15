@@ -1,6 +1,6 @@
 {
   "name": "@dpassarelli/procmonrest",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A promise-based child process runner to ensure reliable testing of local servers written in JS.",
   "main": "index.js",
   "scripts": {
@@ -67,7 +67,6 @@
   },
   "devDependencies": {
     "chai": "^4.3.4",
-    "chai-as-promised": "^7.1.1",
     "coveralls": "^3.1.0",
     "mocha": "^8.3.2",
     "nyc": "^15.1.0",

@@ -33,6 +33,7 @@ import Procmonrest from '@dpassarelli/procmonrest' // or const Procmonrest = req
 
 describe('an end-to-end test', function () {
   const serverProcess = new Procmonrest({
+      command: 'node .',
       waitFor: /listening on port \d{4}/i
     })
 
@@ -62,6 +63,7 @@ Instances of `Procmonrest` must be created using the `new` keyword.
 
 | Key | Type | Value |
 |-----|------|-------|
+| `command` | {String} | The command to run as a separate process (typically whatever is used to start the local server). |
 | `waitFor` | {RegExp} | A [regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) that each line of output from the child process will be tested against. As soon as a match is made, then the process will be considered "ready for testing". | 
 | `signal` | {String?} | A string indicating which signal will be sent to the child process in order to terminate it. Defaults to `SIGINT`, which is supported [cross-platform](https://nodejs.org/api/process.html#process_signal_events). |
 
@@ -75,7 +77,7 @@ This sends the signal specified in the constructor options to the child process 
 
 ## Safety features
 
-In order to avoid any misuse (whether intentional or not), this module launches the command `npm start` without any other arguments. The current working directory is set to the folder containing the `package.json` file.
+In order to avoid any misuse (whether intentional or not), the current working directory is set to the folder containing the parent project's `package.json` file.
 
 ## License
 

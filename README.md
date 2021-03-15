@@ -18,18 +18,18 @@ I wanted to create a set of reliable, end-to-end tests for a REST API that I was
 
 Install via [NPM](https://docs.npmjs.com/downloading-and-installing-packages-locally):
 
-    npm install @dpassarelli/procmonrest --save-dev
+    npm install procmonrest --save-dev
 
 Or [Yarn](https://yarnpkg.com/getting-started/usage#adding-a-dependency):
 
-    yarn add @dpassarelli/procmonrest --dev
+    yarn add procmonrest --dev
 
 Then create a new instance of `Procmonrest` and wait for the `start()` method to resolve before running your tests. Afterwards, wait for the `stop()` method to resolve before continuing on to the next test suite, or the next step in your build process.
 
 For example (using [mocha](https://mochajs.org)):
 
 ```js
-import Procmonrest from '@dpassarelli/procmonrest' // or const Procmonrest = require('@dpassarelli/procmonrest')
+import Procmonrest from 'procmonrest' // or const Procmonrest = require('procmonrest')
 
 describe('an end-to-end test', function () {
   const serverProcess = new Procmonrest({

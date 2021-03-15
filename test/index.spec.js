@@ -21,5 +21,73 @@ describe('the Procmonrest module', () => {
         const instance = new T() /* eslint-disable-line no-unused-vars */
       }).to.throw(ERR_INVALID_OPTIONS)
     })
+
+    it('must throw an error if the options are not an object', () => {
+      expect(() => {
+        const instance = new T('waitFor=listening') /* eslint-disable-line no-unused-vars */
+      }).to.throw(ERR_INVALID_OPTIONS)
+    })
+
+    it('must throw an error if the options are an object but do not include "waitFor"', () => {
+      expect(() => {
+        const instance = new T({}) /* eslint-disable-line no-unused-vars */
+      }).to.throw(ERR_INVALID_OPTIONS)
+    })
+
+    it('must throw an error if the options are an object and include "waitFor", but it is a string', () => {
+      expect(() => {
+        const instance = new T({ waitFor: 'something' }) /* eslint-disable-line no-unused-vars */
+      }).to.throw(ERR_INVALID_OPTIONS)
+    })
+
+    it('must not throw an error if the options are an object and include "waitFor", and it is a valid regular expression', () => {
+      expect(() => {
+        const instance = new T({ waitFor: /something/ }) /* eslint-disable-line no-unused-vars */
+      }).to.not.throw(ERR_INVALID_OPTIONS)
+    })
+  })
+
+  describe('each instance', () => {
+    let instance = null
+
+    beforeEach(() => {
+      instance = new T({
+        waitFor: /ready/
+      })
+    })
+
+    it('must have a method named "start"', () => {
+      const expected = 'function'
+      const actual = typeof instance.start
+
+      expect(actual).to.equal(expected)
+    })
+
+    describe('the "start" method', () => {
+      it('must return a Promise', () => {
+        const returnValue = instance.start()
+
+        expect(returnValue).to.be.instanceOf(Promise)
+
+        returnValue.catch(() => { /* ignore */ })
+      })
+    })
+
+    it('must have a method named "stop"', () => {
+      const expected = 'function'
+      const actual = typeof instance.stop
+
+      expect(actual).to.equal(expected)
+    })
+
+    describe('the "stop" method', () => {
+      it('must return a Promise', () => {
+        const returnValue = instance.stop()
+
+        expect(returnValue).to.be.instanceOf(Promise)
+
+        returnValue.catch(() => { /* ignore */ })
+      })
+    })
   })
 })

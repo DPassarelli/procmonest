@@ -12,7 +12,7 @@ node_js:
 
 env:
   global:
-    - DEBUG=@dpassarelli/procrunest
+    - DEBUG=@dpassarelli/procmonest
 
 install:
   - npm install

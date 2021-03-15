@@ -3,7 +3,7 @@ image: Visual Studio 2019
 version: 1.0.0+{build}
 
 environment:
-  DEBUG: '@dpassarelli/procrunest'
+  DEBUG: '@dpassarelli/procmonest'
   matrix:
     - node_version: '14'
     - node_version: '12'

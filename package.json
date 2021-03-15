@@ -1,5 +1,5 @@
 {
-  "name": "@dpassarelli/procmonest",
+  "name": "@dpassarelli/procmonrest",
   "version": "1.0.0",
   "description": "A promise-based child process runner to ensure reliable testing of local servers written in JS.",
   "main": "index.js",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DPassarelli/procmonest.git"
+    "url": "git+https://github.com/DPassarelli/procmonrest.git"
   },
   "keywords": [
     "asynchronous",
@@ -25,9 +25,9 @@
   "author": "David Passarelli <dpassarelli@camelotcg.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/DPassarelli/procmonest/issues"
+    "url": "https://github.com/DPassarelli/procmonrest/issues"
   },
-  "homepage": "https://github.com/DPassarelli/procmonest#readme",
+  "homepage": "https://github.com/DPassarelli/procmonrest#readme",
   "mocha": {
     "reporter": "min",
     "file": "test/setup.js",

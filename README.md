@@ -1,8 +1,8 @@
-# Procmonest
+# Procmonrest
 
-[![Linux Build Status](https://img.shields.io/travis/DPassarelli/procmonest/master?label=Linux%20build&logo=travis)](https://travis-ci.com/DPassarelli/procmonest)
-[![Windows Build Status](https://img.shields.io/appveyor/build/DPassarelli/procmonest/master?label=Windows%20build&logo=appveyor)](https://ci.appveyor.com/project/DPassarelli/procmonest?branch=master)
-[![Coverage Status](https://img.shields.io/coveralls/github/DPassarelli/procmonest/master?logo=coveralls)](https://coveralls.io/github/DPassarelli/procmonest?branch=master)
+[![Linux Build Status](https://img.shields.io/travis/DPassarelli/procmonrest/master?label=Linux%20build&logo=travis)](https://travis-ci.com/DPassarelli/procmonrest)
+[![Windows Build Status](https://img.shields.io/appveyor/build/DPassarelli/procmonrest/master?label=Windows%20build&logo=appveyor)](https://ci.appveyor.com/project/DPassarelli/procmonrest?branch=master)
+[![Coverage Status](https://img.shields.io/coveralls/github/DPassarelli/procmonrest/master?logo=coveralls)](https://coveralls.io/github/DPassarelli/procmonrest?branch=master)
 
 **A promise-based child process monitor to ensure reliable testing of local servers written in JS.**
 
@@ -18,21 +18,21 @@ I wanted to create a set of reliable, end-to-end tests for a REST API that I was
 
 Install via [NPM](https://docs.npmjs.com/downloading-and-installing-packages-locally):
 
-    npm install @dpassarelli/procmonest --save-dev
+    npm install @dpassarelli/procmonrest --save-dev
 
 Or [Yarn](https://yarnpkg.com/getting-started/usage#adding-a-dependency):
 
-    yarn add @dpassarelli/procmonest --dev
+    yarn add @dpassarelli/procmonrest --dev
 
-Then create a new instance of `Procmonest` and wait for the `start()` method to resolve before running your tests. Afterwards, wait for the `stop()` method to resolve before continuing on to the next test suite, or the next step in your build process.
+Then create a new instance of `Procmonrest` and wait for the `start()` method to resolve before running your tests. Afterwards, wait for the `stop()` method to resolve before continuing on to the next test suite, or the next step in your build process.
 
 For example (using [mocha](https://mochajs.org)):
 
 ```js
-import Procmonest from '@dpassarelli/procmonest' // or const Procmonest = require('@dpassarelli/procmonest')
+import Procmonrest from '@dpassarelli/procmonrest' // or const Procmonrest = require('@dpassarelli/procmonrest')
 
 describe('an end-to-end test', function () {
-  const serverProcess = new Procmonest({
+  const serverProcess = new Procmonrest({
       waitFor: /listening on port \d{4}/i
     })
 
@@ -50,13 +50,13 @@ describe('an end-to-end test', function () {
 
 ## Be careful!
 
-You can create as many separate instances of `Procmonest` as you like; however, keep in mind that you will not be able to run multiple copies of the same child process if they are all competing for the same system resources. For example, you will not be able to run more than one HTTP server locally if they all attempt to listen on the same TCP port. 
+You can create as many separate instances of `Procmonrest` as you like; however, keep in mind that you will not be able to run multiple copies of the same child process if they are all competing for the same system resources. For example, you will not be able to run more than one HTTP server locally if they all attempt to listen on the same TCP port. 
 
 Therefore, you should carefully plan where in the test suite you will call `start()` and `stop()` in order to avoid resource contention.
 
 ## Documentation
 
-Instances of `Procmonest` must be created using the `new` keyword. 
+Instances of `Procmonrest` must be created using the `new` keyword. 
 
 ### Constructor options
 

@@ -21,11 +21,9 @@ install:
 before_test:
   - npm --version
   - npm install
-  - npm install mocha-junit-reporter
 
 test_script:
-  - npm run lint
-  - npx mocha --reporter mocha-junit-reporter
+  - npm run appveyor
   - pwsh: |
         $webClient = New-Object System.Net.WebClient
         $webClient.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\test-results.xml))

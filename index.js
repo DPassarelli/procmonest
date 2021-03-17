@@ -59,7 +59,7 @@ class Procmonrest {
        */
       const workingDirectory = process.cwd()
 
-      debug('starting command "%s" with working directory "%s"', privateData.cmd, workingDirectory)
+      debug('attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
 
       proc = childProcess.spawn(
         privateData.cmd,
@@ -83,7 +83,8 @@ class Procmonrest {
         })
       })
 
-      proc.on('error', (err) => {
+      proc.once('error', (err) => {
+        debug('Error:', err.message)
         reject(err)
       })
 
@@ -100,18 +101,21 @@ class Procmonrest {
   stop () {
     const privateData = _.get(this)
 
-    debug('stopping process "%s"', privateData.cmd)
-
     if (privateData && privateData.proc) {
+      debug('attempting to stop process "%s"', privateData.cmd)
+
       return new Promise((resolve, reject) => {
         privateData.proc.once('exit', (code) => {
           debug('process exited with code %d', code)
-          resolve(code)
 
-          // after this is all done, remove from memory to allow for GC
-          process.nextTick(() => {
-            privateData.proc = null
-          })
+          /**
+           * Once the child process has exited, there should no longer be any
+           * reference to it. This will prevent mulitple calls to this method
+           * from failing to resolve.
+           */
+          privateData.proc = null
+
+          resolve(code)
         })
 
         debug('sending termination signal %s', privateData.signal)
@@ -119,7 +123,8 @@ class Procmonrest {
       })
     }
 
-    return Promise.resolve()
+    debug('there\'s nothing to stop')
+    return Promise.resolve(-1)
   }
 }
 

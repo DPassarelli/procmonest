@@ -6,7 +6,14 @@ const path = require('path')
  * The code under test.
  * @type {any}
  */
-const T = require('../index.js')
+const T = require('./index.js')
+
+/**
+ * The exit code expected to be resolved from the "stop" method when the child
+ * process is not running (meaning, there is nothing to stop).
+ * @type {Number}
+ */
+const STOP_CODE_WHEN_NOT_RUNNING = -1
 
 describe('the Procmonrest module', () => {
   /* eslint-disable no-unused-vars */
@@ -56,7 +63,7 @@ describe('the Procmonrest module', () => {
 
     before(() => {
       instance = new T({
-        command: `node ${path.join(__dirname, 'commands/sample.js')}`,
+        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
         waitFor: /ready/
       })
     })
@@ -81,7 +88,7 @@ describe('the Procmonrest module', () => {
 
     before(() => {
       instance = new T({
-        command: `node ${path.join(__dirname, 'commands/sample.js')}`,
+        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
         waitFor: /ready/
       })
     })
@@ -110,4 +117,48 @@ describe('the Procmonrest module', () => {
   context('when the process throws an error before the expected output is found', () => {})
   context('when the process exits with a non-zero code', () => {})
   context('when the process throws an error after the terminating signal is sent', () => {})
+
+  context('when the "stop" method is called before "start"', () => {
+    describe('the value resolved from "stop"', () => {
+      it('must be the expected value', () => {
+        const instance = new T({
+          command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+          waitFor: /ready/
+        })
+
+        const expected = STOP_CODE_WHEN_NOT_RUNNING
+
+        return instance
+          .stop()
+          .then((actual) => {
+            expect(actual).to.equal(expected)
+          })
+      })
+    })
+  })
+
+  context('when the "stop" method is called more than once', () => {
+    describe('the value resolved from "stop"', () => {
+      it('must be the expected value', () => {
+        const instance = new T({
+          command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+          waitFor: /ready/
+        })
+
+        const expected = STOP_CODE_WHEN_NOT_RUNNING
+
+        return instance
+          .start()
+          .then(() => {
+            return instance.stop()
+          })
+          .then((code) => {
+            return instance.stop()
+          })
+          .then((actual) => {
+            expect(actual).to.equal(expected)
+          })
+      })
+    })
+  })
 })

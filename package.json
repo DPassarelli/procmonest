@@ -4,11 +4,11 @@
   "description": "A promise-based child process runner to ensure reliable testing of local servers written in JS.",
   "main": "index.js",
   "scripts": {
-    "cover:test": "nyc npm run test:unit",
-    "cover:report": "nyc report --reporter=text-lcov | coveralls",
+    "appveyor": "npm run lint && mocha --reporter=mocha-junit-reporter *.spec.js",
     "lint": "standard",
-    "test:unit": "mocha",
-    "test": "npm run lint && npm run cover:test"
+    "test": "npm run lint && nyc npm run test:unit",
+    "test:unit": "mocha *.spec.js",
+    "upload-coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
@@ -17,8 +17,10 @@
   "keywords": [
     "asynchronous",
     "child",
+    "local",
     "process",
     "promise",
+    "server",
     "test",
     "testing"
   ],
@@ -29,7 +31,6 @@
   },
   "homepage": "https://github.com/DPassarelli/procmonrest#readme",
   "mocha": {
-    "reporter": "min",
     "file": "test/setup.js",
     "ui": "bdd"
   },
@@ -69,6 +70,7 @@
     "chai": "^4.3.4",
     "coveralls": "^3.1.0",
     "mocha": "^8.3.2",
+    "mocha-junit-reporter": "^2.0.0",
     "nyc": "^15.1.0",
     "standard": "^16.0.3"
   }

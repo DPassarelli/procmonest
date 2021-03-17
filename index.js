@@ -2,7 +2,7 @@ const childProcess = require('child_process')
 const debug = require('debug')('procmonrest')
 
 /**
- * A collection of private property values for each instance of this class.
+ * A collection of private values for each instance of this class.
  * @type {WeakMap}
  */
 const _ = new WeakMap()
@@ -10,7 +10,12 @@ const _ = new WeakMap()
 class Procmonrest {
   /**
    * Options:
-   *   waitFor  {RegExp}
+   *   command  {String?}  The command that the child process will execute.
+   *                       Defaults to `npm start`.
+   *
+   *   waitFor  {RegExp}   A pattern of characters that will be looked for in
+   *                       the child process's stdout stream, which will
+   *                       indicate that it is ready for testing.
    *
    * @constructor
    */
@@ -18,14 +23,15 @@ class Procmonrest {
     options = options || {}
 
     try {
-      options.waitFor.test('this should fail if not a regexp')
+      options.waitFor.test('this should fail if missing or not a regexp')
     } catch {
       throw new Error('The constructor for Procmonrest takes an options object with a required value for "waitFor".')
     }
 
     const privateData = {
-      cmd: options.command,
-      pattern: options.waitFor
+      cmd: options.command || 'npm start',
+      pattern: options.waitFor,
+      signal: 'SIGINT' // this was specifically chosen for cross-platform compatibility
     }
 
     _.set(this, privateData)
@@ -48,33 +54,30 @@ class Procmonrest {
       const privateData = _.get(this)
 
       /**
-       * Current working directory.
+       * The directory that the child process will be executed in.
        * @type {String}
        */
-      let cwd = __dirname
+      const workingDirectory = process.cwd()
 
-      if (cwd.includes('node_modules/')) {
-        cwd = cwd.substring(0, cwd.indexOf('node_modules/') - 1)
-      }
-
-      debug('starting command "%s" in folder "%s"', privateData.cmd, cwd)
+      debug('starting command "%s" with working directory "%s"', privateData.cmd, workingDirectory)
 
       proc = childProcess.spawn(
         privateData.cmd,
         {
-          cwd: cwd,
+          cwd: workingDirectory,
           shell: true,
           stdio: 'pipe'
         }
       )
 
       proc.stdout.on('data', (data) => {
-        const lines = data.toString().split('\n')
+        const lines = data.toString().split('\n').filter(line => line.length > 0)
 
-        debug(lines)
+        debug('output from process: %o', lines)
 
         lines.forEach((line) => {
           if (privateData.pattern.test(line)) {
+            debug('process is ready!')
             resolve()
           }
         })
@@ -85,7 +88,6 @@ class Procmonrest {
       })
 
       privateData.proc = proc
-      _.set(this, privateData)
     })
   }
 
@@ -102,13 +104,18 @@ class Procmonrest {
 
     if (privateData && privateData.proc) {
       return new Promise((resolve, reject) => {
-        privateData.proc.once('exit', () => {
-          debug('process exited')
-          resolve()
+        privateData.proc.once('exit', (code) => {
+          debug('process exited with code %d', code)
+          resolve(code)
+
+          // after this is all done, remove from memory to allow for GC
+          process.nextTick(() => {
+            privateData.proc = null
+          })
         })
 
-        debug('sending signal "SIGINT"')
-        privateData.proc.kill('SIGINT')
+        debug('sending termination signal %s', privateData.signal)
+        privateData.proc.kill(privateData.signal)
       })
     }
 

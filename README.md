@@ -12,7 +12,7 @@ This project adheres to the `standard` coding style (click below for more inform
 
 ## _Raison d'être_
 
-I wanted to create a set of reliable, end-to-end tests for a REST API that I was working on. In order to do this, I decided to write some code that would start up the server in an entirely separate process, and monitor its output to see when it was ready to accept requests. This worked out so well that I started replicating the code across projects, and, of course, that's when it should become an npm module.
+I wanted to create a set of reliable, end-to-end tests for a REST API that I was working on. In order to do this, I decided to write some code that would start up the server in an entirely separate process, and monitor its `stdout` to see when it was ready to accept requests. This worked out so well that I started replicating the code across projects, and, of course, that's when it should become an npm module.
 
 ## Getting started
 
@@ -63,17 +63,16 @@ Instances of `Procmonrest` must be created using the `new` keyword.
 
 | Key | Type | Value |
 |-----|------|-------|
-| `command` | {String} | The command to run as a separate process (typically whatever is used to start the local server). |
+| `command` | {String?} | The command to run as a separate process (typically whatever is used to start the local server). Defaults to `npm start`. |
 | `waitFor` | {RegExp} | A [regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) that each line of output from the child process will be tested against. As soon as a match is made, then the process will be considered "ready for testing". | 
-| `signal` | {String?} | A string indicating which signal will be sent to the child process in order to terminate it. Defaults to `SIGINT`, which is supported [cross-platform](https://nodejs.org/api/process.html#process_signal_events). |
 
 ### `start()` returns {Promise}
 
-This starts the child process and resolves once the specified output is matched. The promise will be rejected if an error is emitted in the meantime.
+This spawns the child process and resolves once the specified pattern is matched in the child process's `stdout`. The promise will be rejected if an error is thrown in the meantime.
 
 ### `stop()` returns {Promise}
 
-This sends the signal specified in the constructor options to the child process in order to terminate it. The promise will resolve once the process has exited, and the resolved value will be the corresponding exit code as a {Number}.
+This sends a `SIGINT` signal to the child process in order to terminate it (this is done for cross-platform compatibility). The promise will resolve once the process has exited, and the resolved value will be the corresponding exit code as a {Number}.
 
 ## Safety features
 

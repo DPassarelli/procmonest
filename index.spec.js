@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 
+const { doesNotMatch } = require('assert')
 const { expect } = require('chai')
 const path = require('path')
 
@@ -83,24 +84,37 @@ describe('the Procmonrest module', () => {
           waitFor: /ready/
         })
 
-        return instance.start().then(() => { return instance.stop() })
+        const promise = instance.start()
+
+        return expect(promise).to.be.fulfilled
       })
 
       context('when the child process terminates before the expected output is found', () => {
-        it.skip('must return a Promise that is rejected with the exit code', () => {
+        let rejection = null
+
+        before(() => {
           const instance = new T({
             command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
             waitFor: /ready/
           })
 
-          const pattern = /the process unexpectedly exited with code \d+/i
+          return instance.start().catch((err) => { rejection = err })
+        })
 
-          return instance
-            .start()
-            .catch((err) => {
-              const actual = err.message
-              expect(actual).to.match(pattern)
-            })
+        it('must return a Promise that is rejected', () => {
+          expect(rejection).to.not.equal(null)
+        })
+
+        describe('the rejection value', () => {
+          it('must have the expected message', () => {
+            const expected = 'The process exited before indicating that it was ready for testing'
+            expect(rejection).to.have.property('message', expected)
+          })
+
+          it('must have the expected exit code', () => {
+            const expected = 1
+            expect(rejection).to.have.property('exitCode', expected)
+          })
         })
       })
     })
@@ -113,14 +127,46 @@ describe('the Procmonrest module', () => {
         waitFor: /ready/
       })
 
-      const expected = 'There is no process to stop. Please call start() first.'
+      const promise = instance.stop()
 
-      return instance
-        .stop()
-        .catch((err) => {
-          const actual = err.message
-          expect(actual).to.equal(expected)
+      return expect(promise).to.be.rejectedWith('There is nothing to stop. Please call start() first.')
+    })
+  })
+
+  context('when the "stop" method is called more than once', () => {
+    it('must be rejected', () => {
+      const instance = new T({
+        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+        waitFor: /ready/
+      })
+
+      const promise = instance
+        .start()
+        .then(() => {
+          return instance.stop()
         })
+        .then(() => {
+          return instance.stop()
+        })
+
+      return expect(promise).to.be.rejectedWith('There is nothing to stop. Please call start() first.')
+    })
+  })
+
+  context('when the "stop" method is called on a process that is not running', () => {
+    it('must be rejected', () => {
+      const instance = new T({
+        command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
+        waitFor: /ready/
+      })
+
+      const promise = instance
+        .start()
+        .catch(() => {
+          return instance.stop()
+        })
+
+      return expect(promise).to.be.rejectedWith('There is nothing to stop. Please call start() first.')
     })
   })
 })

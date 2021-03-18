@@ -3,6 +3,8 @@ const childProcess = require('child_process')
 const debug = require('debug')('procmonrest')
 const terminate = require('tree-kill')
 
+const patternForFailedTermination = /the process "\d+" not found/i
+
 /**
  * A collection of private values for each instance of this class.
  * @type {WeakMap}
@@ -32,7 +34,8 @@ class Procmonrest {
 
     const privateData = {
       cmd: options.command || 'npm start',
-      pattern: options.waitFor
+      pattern: options.waitFor,
+      ready: false
     }
 
     _.set(this, privateData)
@@ -60,7 +63,8 @@ class Procmonrest {
        */
       const workingDirectory = process.cwd()
 
-      debug('attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
+      debug('START: attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
+      debug('START: waiting for output to match %o', privateData.pattern)
 
       sb = childProcess.spawn(
         privateData.cmd,
@@ -74,11 +78,12 @@ class Procmonrest {
       sb.stdout.on('data', (data) => {
         const lines = data.toString().split(/\r?\n/).filter(line => line.length > 0)
 
-        debug('STDOUT: %o', lines)
+        debug('STDOUT:', lines)
 
         lines.forEach((line) => {
           if (privateData.pattern.test(line)) {
-            debug('process is ready!')
+            debug('START: process is ready!')
+            privateData.ready = true
             resolve()
           }
         })
@@ -86,16 +91,18 @@ class Procmonrest {
 
       sb.stderr.on('data', (data) => {
         const lines = data.toString().split(/\r?\n/).filter(line => line.length > 0)
-        debug('STDERR: %o', lines)
+        debug('STDERR:', lines)
       })
 
-      // sb.once('exit', (code) => {
-      //   if (code > 0) {
-      //     const msg = `The process unexpectedly exited with code ${code}`
-      //     debug(msg)
-      //     reject(new Error(msg))
-      //   }
-      // })
+      sb.once('exit', (code) => {
+        if (!privateData.ready) {
+          const err = new Error('The process exited before indicating that it was ready for testing')
+          err.exitCode = code
+
+          debug('START:', err.message.toLowerCase())
+          reject(err)
+        }
+      })
 
       privateData.subProcess = sb
     })
@@ -111,12 +118,31 @@ class Procmonrest {
     const privateData = _.get(this)
 
     if (privateData && privateData.subProcess) {
-      return new Promise((resolve) => {
-        terminate(privateData.subProcess.pid, () => { resolve() })
+      return new Promise((resolve, reject) => {
+        debug('STOP: attempting to terminate process with id %d...', privateData.subProcess.pid)
+
+        terminate(privateData.subProcess.pid, (err) => {
+          if (err) {
+            if (patternForFailedTermination.test(err.message)) {
+              debug('STOP: ...process was not found')
+              reject(new Error('There is nothing to stop. Please call start() first.'))
+            } else {
+              debug('STOP: ...an error occurred ->', err.message)
+              reject(err)
+            }
+
+            return
+          }
+
+          debug('STOP: ...done!')
+          privateData.subProcess = null
+          resolve()
+        })
       })
     }
 
-    return Promise.reject(new Error('There is no process to stop. Please call start() first.'))
+    debug('STOP: process has not started')
+    return Promise.reject(new Error('There is nothing to stop. Please call start() first.'))
   }
 }
 

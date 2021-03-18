@@ -78,8 +78,8 @@ describe('the Procmonrest module', () => {
       expect(actual).to.equal(expected)
     })
 
-    it('must have a property called "ready"', () => {
-      expect(instance).to.have.property('ready')
+    it('must have a property called "running"', () => {
+      expect(instance).to.have.property('running')
     })
   })
 
@@ -125,7 +125,7 @@ describe('the Procmonrest module', () => {
     })
   })
 
-  describe('the "ready" property', () => {
+  describe('the "running" property', () => {
     let instance = null
 
     beforeEach(() => {
@@ -137,13 +137,13 @@ describe('the Procmonrest module', () => {
 
     it('must be read-only', () => {
       expect(() => {
-        instance.ready = true
-      }).to.throw('Cannot set property ready')
+        instance.running = true
+      }).to.throw('Cannot set property running')
     })
 
     it('must be "false" by default', () => {
       const expected = false
-      const actual = instance.ready
+      const actual = instance.running
 
       expect(actual).to.equal(expected)
     })
@@ -154,7 +154,7 @@ describe('the Procmonrest module', () => {
       return instance
         .start()
         .then(() => {
-          const actual = instance.ready
+          const actual = instance.running
           expect(actual).to.equal(expected)
         })
     })

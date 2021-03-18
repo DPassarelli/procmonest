@@ -108,7 +108,12 @@ class Procmonrest {
     })
   }
 
-  get ready () {
+  /**
+   * 
+   * @property
+   * @returns {Boolean}
+   */
+  get running () {
     return _.get(this).ready
   }
 

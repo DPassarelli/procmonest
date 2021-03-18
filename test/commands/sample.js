@@ -2,6 +2,6 @@
 // for the calling code to recognize that it has started
 global.setTimeout(() => {
   // no-op
-}, 1000)
+}, 500)
 
 console.log('ready')

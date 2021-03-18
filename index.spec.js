@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
-const { doesNotMatch } = require('assert')
+'use strict'
+
 const { expect } = require('chai')
 const path = require('path')
 
@@ -77,46 +78,85 @@ describe('the Procmonrest module', () => {
       expect(actual).to.equal(expected)
     })
 
-    describe('the "start" method', () => {
-      it('must return a Promise that is resolved successfully if the expected output is found', () => {
+    it('must have a property called "ready"', () => {
+      expect(instance).to.have.property('ready')
+    })
+  })
+
+  describe('the "start" method', () => {
+    it('must return a Promise that is resolved successfully if the expected output is found', () => {
+      const instance = new T({
+        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+        waitFor: /ready/
+      })
+
+      const promise = instance.start()
+
+      return expect(promise).to.be.fulfilled
+    })
+
+    context('when the child process terminates before the expected output is found', () => {
+      let rejection = null
+
+      before(() => {
         const instance = new T({
-          command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+          command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
           waitFor: /ready/
         })
 
-        const promise = instance.start()
-
-        return expect(promise).to.be.fulfilled
+        return instance.start().catch((err) => { rejection = err })
       })
 
-      context('when the child process terminates before the expected output is found', () => {
-        let rejection = null
+      it('must return a Promise that is rejected', () => {
+        expect(rejection).to.not.equal(null)
+      })
 
-        before(() => {
-          const instance = new T({
-            command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
-            waitFor: /ready/
-          })
-
-          return instance.start().catch((err) => { rejection = err })
+      describe('the rejection value', () => {
+        it('must have the expected message', () => {
+          const expected = 'The process exited before indicating that it was ready for testing'
+          expect(rejection).to.have.property('message', expected)
         })
 
-        it('must return a Promise that is rejected', () => {
-          expect(rejection).to.not.equal(null)
-        })
-
-        describe('the rejection value', () => {
-          it('must have the expected message', () => {
-            const expected = 'The process exited before indicating that it was ready for testing'
-            expect(rejection).to.have.property('message', expected)
-          })
-
-          it('must have the expected exit code', () => {
-            const expected = 1
-            expect(rejection).to.have.property('exitCode', expected)
-          })
+        it('must have the expected exit code', () => {
+          const expected = 1
+          expect(rejection).to.have.property('exitCode', expected)
         })
       })
+    })
+  })
+
+  describe('the "ready" property', () => {
+    let instance = null
+
+    beforeEach(() => {
+      instance = new T({
+        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+        waitFor: /ready/
+      })
+    })
+
+    it('must be read-only', () => {
+      expect(() => {
+        instance.ready = true
+      }).to.throw('Cannot set property ready')
+    })
+
+    it('must be "false" by default', () => {
+      const expected = false
+      const actual = instance.ready
+
+      expect(actual).to.equal(expected)
+    })
+
+    it('must be "true" after the process starts successfully', () => {
+      const expected = true
+
+      return instance
+        .start()
+        .then(() => {
+          const actual = instance.ready
+          expect(actual).to.equal(expected)
+        })
     })
   })
 

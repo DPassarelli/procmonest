@@ -108,6 +108,10 @@ class Procmonrest {
     })
   }
 
+  get ready () {
+    return _.get(this).ready
+  }
+
   /**
    * Sends a signal to terminate the child process. Resolves with the value of
    * the exit code.

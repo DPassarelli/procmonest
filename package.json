@@ -1,6 +1,6 @@
 {
   "name": "procmonrest",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A promise-based child process runner to ensure reliable testing of local servers written in JS.",
   "main": "index.js",
   "scripts": {
@@ -64,7 +64,8 @@
     ]
   },
   "dependencies": {
-    "debug": "^4.3.1"
+    "debug": "^4.3.1",
+    "tree-kill": "^1.2.2"
   },
   "devDependencies": {
     "chai": "^4.3.4",

@@ -72,7 +72,7 @@ This spawns the child process and resolves once the specified pattern is matched
 
 ### `stop()` returns {Promise}
 
-This sends a `SIGINT` signal to the child process in order to terminate it (this is done for cross-platform compatibility). The promise will resolve once the process has exited, and the resolved value will be the corresponding exit code as a {Number}.
+This method calls [tree-kill](https://www.npmjs.com/package/tree-kill) on the child process. On MS Windows, this will forcefully terminate the process. On macOS and Linux, it will send a `SIGTERM` signal. 
 
 ## Safety features
 

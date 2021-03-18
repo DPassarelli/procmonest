@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 
+const { expect } = require('chai')
 const path = require('path')
 
 /**
@@ -7,13 +8,6 @@ const path = require('path')
  * @type {any}
  */
 const T = require('./index.js')
-
-/**
- * The exit code expected to be resolved from the "stop" method when the child
- * process is not running (meaning, there is nothing to stop).
- * @type {Number}
- */
-const STOP_CODE_WHEN_NOT_RUNNING = -1
 
 describe('the Procmonrest module', () => {
   /* eslint-disable no-unused-vars */
@@ -81,84 +75,52 @@ describe('the Procmonrest module', () => {
 
       expect(actual).to.equal(expected)
     })
+
+    describe('the "start" method', () => {
+      it('must return a Promise that is resolved successfully if the expected output is found', () => {
+        const instance = new T({
+          command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+          waitFor: /ready/
+        })
+
+        return instance.start().then(() => { return instance.stop() })
+      })
+
+      context('when the child process terminates before the expected output is found', () => {
+        it.skip('must return a Promise that is rejected with the exit code', () => {
+          const instance = new T({
+            command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
+            waitFor: /ready/
+          })
+
+          const pattern = /the process unexpectedly exited with code \d+/i
+
+          return instance
+            .start()
+            .catch((err) => {
+              const actual = err.message
+              expect(actual).to.match(pattern)
+            })
+        })
+      })
+    })
   })
 
-  context('when the process starts and stops normally', () => {
-    let instance = null
-
-    before(() => {
-      instance = new T({
+  context('when the "stop" method is called before "start"', () => {
+    it('must be rejected', () => {
+      const instance = new T({
         command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
         waitFor: /ready/
       })
-    })
 
-    describe('the "start" method', () => {
-      it('must be resolved if the expected output is found', () => {
-        return instance.start().then(() => { return instance.stop() })
-      })
-    })
+      const expected = 'There is no process to stop. Please call start() first.'
 
-    describe('the "stop" method', () => {
-      it('must resolve to the exit code returned by the process', () => {
-        return instance
-          .start()
-          .then(() => {
-            return instance.stop()
-          })
-          .then((actual) => {
-            const expected = 0
-            expect(actual).to.equal(expected)
-          })
-      })
-    })
-  })
-
-  context('when the process throws an error before the expected output is found', () => {})
-  context('when the process exits with a non-zero code', () => {})
-  context('when the process throws an error after the terminating signal is sent', () => {})
-
-  context('when the "stop" method is called before "start"', () => {
-    describe('the value resolved from "stop"', () => {
-      it('must be the expected value', () => {
-        const instance = new T({
-          command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
-          waitFor: /ready/
+      return instance
+        .stop()
+        .catch((err) => {
+          const actual = err.message
+          expect(actual).to.equal(expected)
         })
-
-        const expected = STOP_CODE_WHEN_NOT_RUNNING
-
-        return instance
-          .stop()
-          .then((actual) => {
-            expect(actual).to.equal(expected)
-          })
-      })
-    })
-  })
-
-  context('when the "stop" method is called more than once', () => {
-    describe('the value resolved from "stop"', () => {
-      it('must be the expected value', () => {
-        const instance = new T({
-          command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
-          waitFor: /ready/
-        })
-
-        const expected = STOP_CODE_WHEN_NOT_RUNNING
-
-        return instance
-          .start()
-          .then(() => {
-            return instance.stop()
-          })
-          .then((code) => {
-            return instance.stop()
-          })
-          .then((actual) => {
-            expect(actual).to.equal(expected)
-          })
-      })
     })
   })
 })

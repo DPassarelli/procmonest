@@ -1,5 +1,7 @@
 const childProcess = require('child_process')
+
 const debug = require('debug')('procmonrest')
+const terminate = require('tree-kill')
 
 /**
  * A collection of private values for each instance of this class.
@@ -30,8 +32,7 @@ class Procmonrest {
 
     const privateData = {
       cmd: options.command || 'npm start',
-      pattern: options.waitFor,
-      signal: 'SIGINT' // this was specifically chosen for cross-platform compatibility
+      pattern: options.waitFor
     }
 
     _.set(this, privateData)
@@ -48,7 +49,7 @@ class Procmonrest {
      * The child process itself.
      * @type {ChildProcess}
      */
-    let proc = null
+    let sb = null
 
     return new Promise((resolve, reject) => {
       const privateData = _.get(this)
@@ -61,7 +62,7 @@ class Procmonrest {
 
       debug('attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
 
-      proc = childProcess.spawn(
+      sb = childProcess.spawn(
         privateData.cmd,
         {
           cwd: workingDirectory,
@@ -70,10 +71,10 @@ class Procmonrest {
         }
       )
 
-      proc.stdout.on('data', (data) => {
-        const lines = data.toString().split('\n').filter(line => line.length > 0)
+      sb.stdout.on('data', (data) => {
+        const lines = data.toString().split(/\r?\n/).filter(line => line.length > 0)
 
-        debug('output from process: %o', lines)
+        debug('STDOUT: %o', lines)
 
         lines.forEach((line) => {
           if (privateData.pattern.test(line)) {
@@ -83,12 +84,20 @@ class Procmonrest {
         })
       })
 
-      proc.once('error', (err) => {
-        debug('Error:', err.message)
-        reject(err)
+      sb.stderr.on('data', (data) => {
+        const lines = data.toString().split(/\r?\n/).filter(line => line.length > 0)
+        debug('STDERR: %o', lines)
       })
 
-      privateData.proc = proc
+      // sb.once('exit', (code) => {
+      //   if (code > 0) {
+      //     const msg = `The process unexpectedly exited with code ${code}`
+      //     debug(msg)
+      //     reject(new Error(msg))
+      //   }
+      // })
+
+      privateData.subProcess = sb
     })
   }
 
@@ -101,30 +110,13 @@ class Procmonrest {
   stop () {
     const privateData = _.get(this)
 
-    if (privateData && privateData.proc) {
-      debug('attempting to stop process "%s"', privateData.cmd)
-
-      return new Promise((resolve, reject) => {
-        privateData.proc.once('exit', (code) => {
-          debug('process exited with code %d', code)
-
-          /**
-           * Once the child process has exited, there should no longer be any
-           * reference to it. This will prevent mulitple calls to this method
-           * from failing to resolve.
-           */
-          privateData.proc = null
-
-          resolve(code)
-        })
-
-        debug('sending termination signal %s', privateData.signal)
-        privateData.proc.kill(privateData.signal)
+    if (privateData && privateData.subProcess) {
+      return new Promise((resolve) => {
+        terminate(privateData.subProcess.pid, () => { resolve() })
       })
     }
 
-    debug('there\'s nothing to stop')
-    return Promise.resolve(-1)
+    return Promise.reject(new Error('There is no process to stop. Please call start() first.'))
   }
 }
 

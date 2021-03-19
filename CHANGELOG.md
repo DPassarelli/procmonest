@@ -6,9 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.3.0] - 2021-03-18
 
+### Added
+
+* The `stop()` method will be rejected if the process already exited (or was not started to begin with).
+* The `running` property can be used to check the current state of the child process.
+
 ### Changed
 
-* The "stop()" method no longer resolves to the exit code of the child process. I was not able to get this to work, and decided it was not a significant feature. 
+* The `stop()` method no longer resolves to the exit code of the child process. I was not able to get this to work, and decided it was not a significant feature. 
 
 ## [0.2.0] - 2021-03-17
 

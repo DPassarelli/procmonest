@@ -102,6 +102,9 @@ class Procmonrest {
           debug('START:', err.message.toLowerCase())
           reject(err)
         }
+
+        privateData.ready = false
+        privateData.subProcess = null
       })
 
       privateData.subProcess = sb

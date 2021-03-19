@@ -128,35 +128,71 @@ describe('the Procmonrest module', () => {
   describe('the "running" property', () => {
     let instance = null
 
-    beforeEach(() => {
-      instance = new T({
-        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
-        waitFor: /ready/
+    context('when the process runs successfully', () => {
+      beforeEach(() => {
+        instance = new T({
+          command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+          waitFor: /ready/
+        })
+      })
+
+      it('must be read-only', () => {
+        expect(() => {
+          instance.running = true
+        }).to.throw('Cannot set property running')
+      })
+
+      it('must be "false" by default', () => {
+        const expected = false
+        const actual = instance.running
+
+        expect(actual).to.equal(expected)
+      })
+
+      it('must be "true" after the process starts', () => {
+        const expected = true
+
+        return instance
+          .start()
+          .then(() => {
+            const actual = instance.running
+            expect(actual).to.equal(expected)
+          })
+      })
+
+      it('must be "false" after the process has started and stopped', () => {
+        const expected = false
+
+        return instance
+          .start()
+          .then(() => {
+            return instance.stop()
+          })
+          .then(() => {
+            const actual = instance.running
+            expect(actual).to.equal(expected)
+          })
       })
     })
 
-    it('must be read-only', () => {
-      expect(() => {
-        instance.running = true
-      }).to.throw('Cannot set property running')
-    })
-
-    it('must be "false" by default', () => {
-      const expected = false
-      const actual = instance.running
-
-      expect(actual).to.equal(expected)
-    })
-
-    it('must be "true" after the process starts successfully', () => {
-      const expected = true
-
-      return instance
-        .start()
-        .then(() => {
-          const actual = instance.running
-          expect(actual).to.equal(expected)
+    context('when the process fails to start correctly', () => {
+      beforeEach(() => {
+        instance = new T({
+          command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
+          waitFor: /ready/
         })
+      })
+
+      it('must be false', () => {
+        const expected = false
+
+        return instance
+          .start()
+          .catch(() => {
+            const actual = instance.running
+            expect(actual).to.equal(expected)
+          })
+      })
     })
   })
 

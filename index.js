@@ -109,7 +109,8 @@ class Procmonrest {
   }
 
   /**
-   * 
+   * A flag indicating whether the child process is currently running.
+   *
    * @property
    * @returns {Boolean}
    */
@@ -131,6 +132,9 @@ class Procmonrest {
         debug('STOP: attempting to terminate process with id %d...', privateData.subProcess.pid)
 
         terminate(privateData.subProcess.pid, (err) => {
+          privateData.ready = false
+          privateData.subProcess = null
+
           if (err) {
             if (patternForFailedTermination.test(err.message)) {
               debug('STOP: ...process was not found')
@@ -144,7 +148,6 @@ class Procmonrest {
           }
 
           debug('STOP: ...done!')
-          privateData.subProcess = null
           resolve()
         })
       })

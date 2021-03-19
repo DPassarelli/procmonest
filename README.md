@@ -66,13 +66,21 @@ Instances of `Procmonrest` must be created using the `new` keyword.
 | `command` | {String?} | The command to run as a separate process (typically whatever is used to start the local server). Defaults to `npm start`. |
 | `waitFor` | {RegExp} | A [regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) that each line of output from the child process will be tested against. As soon as a match is made, then the process will be considered "ready for testing". | 
 
-### `start()` returns {Promise}
+### Properties
+
+#### `running` {Boolean}
+
+Returns `true` when the child process has started and is ready to be tested.
+
+### Methods
+
+#### `start` returns {Promise}
 
 This spawns the child process and resolves once the specified pattern is matched in the child process's `stdout`. The promise will be rejected if an error is thrown in the meantime.
 
-### `stop()` returns {Promise}
+#### `stop` returns {Promise}
 
-This method calls [tree-kill](https://www.npmjs.com/package/tree-kill) on the child process. On MS Windows, this will forcefully terminate the process. On macOS and Linux, it will send a `SIGTERM` signal. 
+This method calls [tree-kill](https://www.npmjs.com/package/tree-kill) on the child process. On MS Windows, this will forcefully terminate the process. On macOS and Linux, it will send a `SIGTERM` signal. The promise will be rejected if the child process is not running.
 
 ## Safety features
 

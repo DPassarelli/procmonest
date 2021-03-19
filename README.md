@@ -42,7 +42,9 @@ describe('an end-to-end test', function () {
   })
 
   after(() => {
-    return serverProcess.stop()
+    if (serverProcess.running) {
+      return serverProcess.stop()
+    }
   })
 
   ...

@@ -1,4 +1,5 @@
 const childProcess = require('child_process')
+const fs = require('fs')
 const path = require('path')
 
 const debug = require('debug')('procmonrest')
@@ -39,8 +40,11 @@ class Procmonrest {
 
     if (options.saveLogTo) {
       try {
-        privateData.logPath = path.normalize(options.saveLogTo)
-        debug('log path set to "%s"', privateData.logPath)
+        privateData.log = {
+          path: path.normalize(options.saveLogTo)
+        }
+
+        debug('log path set to "%s"', privateData.log.path)
       } catch (err) {
         debug('could not parse path spec "%s"', options.saveLogTo)
         throw new Error('If specified, the "saveLogTo" option must refer to a valid location (folder, not file) on the local system.')
@@ -71,6 +75,14 @@ class Procmonrest {
        * @type {String}
        */
       const workingDirectory = process.cwd()
+
+      if (privateData.log) {
+        privateData.log.filename = 'log'
+
+        debug('START: creating write stream for log file "%s"', path.join(privateData.log.path, privateData.log.filename))
+
+        privateData.log.writeStream = fs.createWriteStream(path.join(privateData.log.path, privateData.log.filename))
+      }
 
       debug('START: attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
       debug('START: waiting for output to match %o', privateData.pattern)
@@ -110,6 +122,10 @@ class Procmonrest {
 
           debug('START:', err.message.toLowerCase())
           reject(err)
+        }
+
+        if (privateData.log && privateData.log.writeStream) {
+          privateData.log.writeStream.end()
         }
 
         privateData.ready = false

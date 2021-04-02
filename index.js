@@ -1,9 +1,8 @@
 const childProcess = require('child_process')
+const path = require('path')
 
 const debug = require('debug')('procmonrest')
 const terminate = require('tree-kill')
-
-const patternForFailedTermination = /the process "\d+" not found/i
 
 /**
  * A collection of private values for each instance of this class.
@@ -36,6 +35,16 @@ class Procmonrest {
       cmd: options.command || 'npm start',
       pattern: options.waitFor,
       ready: false
+    }
+
+    if (options.saveLogTo) {
+      try {
+        privateData.logPath = path.normalize(options.saveLogTo)
+        debug('log path set to "%s"', privateData.logPath)
+      } catch (err) {
+        debug('could not parse path spec "%s"', options.saveLogTo)
+        throw new Error('If specified, the "saveLogTo" option must refer to a valid location (folder, not file) on the local system.')
+      }
     }
 
     _.set(this, privateData)
@@ -114,18 +123,16 @@ class Procmonrest {
   /**
    * A flag indicating whether the child process is currently running.
    *
-   * @property
-   * @returns {Boolean}
+   * @return {Boolean}
    */
-  get running () {
+  get isRunning () {
     return _.get(this).ready
   }
 
   /**
-   * Sends a signal to terminate the child process. Resolves with the value of
-   * the exit code.
+   * Sends a signal to terminate the child process. Resolves when complete.
    *
-   * @return {Promise}   Resolves to an integer.
+   * @return {Promise}
    */
   stop () {
     const privateData = _.get(this)
@@ -139,7 +146,9 @@ class Procmonrest {
           privateData.subProcess = null
 
           if (err) {
-            if (patternForFailedTermination.test(err.message)) {
+            const patternForMissingProcessId = /the process "\d+" not found/i
+
+            if (patternForMissingProcessId.test(err.message)) {
               debug('STOP: ...process was not found')
               reject(new Error('There is nothing to stop. Please call start() first.'))
             } else {

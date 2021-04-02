@@ -2,14 +2,11 @@
 
 'use strict'
 
-const { expect } = require('chai')
-const path = require('path')
-
 /**
  * The code under test.
  * @type {any}
  */
-const T = require('./index.js')
+const T = require('../index.js')
 
 describe('the Procmonrest module', () => {
   /* eslint-disable no-unused-vars */
@@ -21,6 +18,7 @@ describe('the Procmonrest module', () => {
 
   describe('the constructor', () => {
     const ERR_INVALID_OPTIONS = 'The constructor for Procmonrest takes an options object with a required value for "waitFor".'
+    const ERR_INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location (folder, not file) on the local system.'
 
     it('must throw an error if there are no options provided', () => {
       expect(() => {
@@ -51,6 +49,24 @@ describe('the Procmonrest module', () => {
         const instance = new T({ waitFor: /something/ })
       }).to.not.throw(ERR_INVALID_OPTIONS)
     })
+
+    it('must not throw an error if the options include a value for "saveLogTo" that is `null`', () => {
+      expect(() => {
+        const instance = new T({
+          waitFor: /something/,
+          saveLogTo: null
+        })
+      }).to.not.throw(ERR_INVALID_LOG_PATH)
+    })
+
+    it('must throw an error if the options include a value for "saveLogTo" that is not a string', () => {
+      expect(() => {
+        const instance = new T({
+          waitFor: /something/,
+          saveLogTo: [404]
+        })
+      }).to.throw(ERR_INVALID_LOG_PATH)
+    })
   })
   /* eslint-enable no-unused-vars */
 
@@ -59,7 +75,7 @@ describe('the Procmonrest module', () => {
 
     before(() => {
       instance = new T({
-        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+        command: global.scriptCommands.runsNormally,
         waitFor: /ready/
       })
     })
@@ -78,15 +94,15 @@ describe('the Procmonrest module', () => {
       expect(actual).to.equal(expected)
     })
 
-    it('must have a property called "running"', () => {
-      expect(instance).to.have.property('running')
+    it('must have a property called "isRunning"', () => {
+      expect(instance).to.have.property('isRunning')
     })
   })
 
   describe('the "start" method', () => {
     it('must return a Promise that is resolved successfully if the expected output is found', () => {
       const instance = new T({
-        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+        command: global.scriptCommands.runsNormally,
         waitFor: /ready/
       })
 
@@ -100,7 +116,7 @@ describe('the Procmonrest module', () => {
 
       before(() => {
         const instance = new T({
-          command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
+          command: global.scriptCommands.exitsEarly,
           waitFor: /ready/
         })
 
@@ -125,26 +141,26 @@ describe('the Procmonrest module', () => {
     })
   })
 
-  describe('the "running" property', () => {
+  describe('the "isRunning" property', () => {
     let instance = null
 
     context('when the process runs successfully', () => {
       beforeEach(() => {
         instance = new T({
-          command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+          command: global.scriptCommands.runsNormally,
           waitFor: /ready/
         })
       })
 
       it('must be read-only', () => {
         expect(() => {
-          instance.running = true
-        }).to.throw('Cannot set property running')
+          instance.isRunning = true
+        }).to.throw('Cannot set property isRunning')
       })
 
       it('must be "false" by default', () => {
         const expected = false
-        const actual = instance.running
+        const actual = instance.isRunning
 
         expect(actual).to.equal(expected)
       })
@@ -155,12 +171,12 @@ describe('the Procmonrest module', () => {
         return instance
           .start()
           .then(() => {
-            const actual = instance.running
+            const actual = instance.isRunning
             expect(actual).to.equal(expected)
           })
       })
 
-      it('must be "false" after the process has started and stopped', () => {
+      it('must be "false" after the process has been started and then stopped', () => {
         const expected = false
 
         return instance
@@ -169,7 +185,7 @@ describe('the Procmonrest module', () => {
             return instance.stop()
           })
           .then(() => {
-            const actual = instance.running
+            const actual = instance.isRunning
             expect(actual).to.equal(expected)
           })
       })
@@ -178,7 +194,7 @@ describe('the Procmonrest module', () => {
     context('when the process fails to start correctly', () => {
       beforeEach(() => {
         instance = new T({
-          command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
+          command: global.scriptCommands.exitsEarly,
           waitFor: /ready/
         })
       })
@@ -189,7 +205,7 @@ describe('the Procmonrest module', () => {
         return instance
           .start()
           .catch(() => {
-            const actual = instance.running
+            const actual = instance.isRunning
             expect(actual).to.equal(expected)
           })
       })
@@ -199,7 +215,7 @@ describe('the Procmonrest module', () => {
   context('when the "stop" method is called before "start"', () => {
     it('must be rejected', () => {
       const instance = new T({
-        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+        command: global.scriptCommands.runsNormally,
         waitFor: /ready/
       })
 
@@ -212,7 +228,7 @@ describe('the Procmonrest module', () => {
   context('when the "stop" method is called more than once', () => {
     it('must be rejected', () => {
       const instance = new T({
-        command: `node ${path.join(__dirname, 'test/commands/sample.js')}`,
+        command: global.scriptCommands.runsNormally,
         waitFor: /ready/
       })
 
@@ -232,7 +248,7 @@ describe('the Procmonrest module', () => {
   context('when the "stop" method is called on a process that is not running', () => {
     it('must be rejected', () => {
       const instance = new T({
-        command: `node ${path.join(__dirname, 'test/commands/error.js')}`,
+        command: global.scriptCommands.exitsEarly,
         waitFor: /ready/
       })
 

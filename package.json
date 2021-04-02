@@ -4,10 +4,10 @@
   "description": "A promise-based child process runner to ensure reliable testing of local servers written in JS.",
   "main": "index.js",
   "scripts": {
-    "appveyor": "npm run lint && mocha --reporter=mocha-junit-reporter *.spec.js",
+    "appveyor": "npm run lint && mocha --reporter=mocha-junit-reporter",
     "lint": "standard",
     "test": "npm run lint && nyc npm run test:unit",
-    "test:unit": "mocha *.spec.js",
+    "test:unit": "mocha",
     "upload-coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {

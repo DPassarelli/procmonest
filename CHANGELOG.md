@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-* All output from the spawned child's `stdout` and `stderr` can be saved to a log file. The path to this file will be returned by `stop()`.
+* All output from the spawned child's `stdout` and `stderr` can be saved to a log file.
 
 ### Changed
 

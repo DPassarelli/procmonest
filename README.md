@@ -42,7 +42,7 @@ describe('an end-to-end test', function () {
   })
 
   after(() => {
-    if (serverProcess.running) {
+    if (serverProcess.isRunning) {
       return serverProcess.stop()
     }
   })
@@ -65,12 +65,14 @@ Instances of `Procmonrest` must be created using the `new` keyword.
 
 | Key | Type | Value |
 |-----|------|-------|
-| `command` | {String?} | The command to run as a separate process (typically whatever is used to start the local server). Defaults to `npm start`. |
+| `command` | {String?} | The command to run (typically, whatever is used to start the local server). Defaults to `npm start`. |
+| `reference` | {String?} | If specified, then this value will be noted inside the log file. |
+| `saveLogTo` | {String?} | If specified, then the `stdout` and `stderr` output of the child process will be saved to this location. It must be an absolute path spec including the file name. |
 | `waitFor` | {RegExp} | A [regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) that each line of output from the child process will be tested against. As soon as a match is made, then the process will be considered "ready for testing". | 
 
 ### Properties
 
-#### `running` {Boolean}
+#### `isRunning` {Boolean}
 
 Returns `true` when the child process has started and is ready to be tested.
 
@@ -78,11 +80,14 @@ Returns `true` when the child process has started and is ready to be tested.
 
 #### `start` returns {Promise}
 
-This spawns the child process and resolves once the specified pattern is matched in the child process's `stdout`. The promise will be rejected if an error is thrown in the meantime.
+This spawns the child process, and resolves once the specified pattern is matched in the child process's `stdout`. The promise will be rejected for any of the following reasons:
+
+1. The process exits before the pattern is matched. If this is the case, then the returned `Error` object will have a property called `exitCode` that equals the exit code of the child process.
+2. The log file cannot be written to.
 
 #### `stop` returns {Promise}
 
-This method calls [tree-kill](https://www.npmjs.com/package/tree-kill) on the child process. On MS Windows, this will forcefully terminate the process. On macOS and Linux, it will send a `SIGTERM` signal. The promise will be rejected if the child process is not running.
+This method calls [tree-kill](https://www.npmjs.com/package/tree-kill) on the child process, and resolves once that is complete. The promise will be rejected if the child process is not running.
 
 ## Safety features
 

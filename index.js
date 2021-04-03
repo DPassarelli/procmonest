@@ -35,7 +35,8 @@ class Procmonrest {
     const privateData = {
       cmd: options.command || 'npm start',
       pattern: options.waitFor,
-      ready: false
+      ready: false,
+      ref: options.reference || null
     }
 
     if (options.saveLogTo) {
@@ -46,8 +47,8 @@ class Procmonrest {
 
         debug('log path set to "%s"', privateData.log.path)
       } catch (err) {
-        debug('could not parse path spec "%s"', options.saveLogTo)
-        throw new Error('If specified, the "saveLogTo" option must refer to a valid location (folder, not file) on the local system.')
+        debug('could not normalize "%s"', options.saveLogTo)
+        throw new Error('If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.')
       }
     }
 
@@ -77,11 +78,19 @@ class Procmonrest {
       const workingDirectory = process.cwd()
 
       if (privateData.log) {
-        privateData.log.filename = 'log'
+        debug('START: creating write stream for log file "%s"', privateData.log.path)
 
-        debug('START: creating write stream for log file "%s"', path.join(privateData.log.path, privateData.log.filename))
+        privateData.log.stream = fs.createWriteStream(privateData.log.path)
+        privateData.log.stream.write('************************************\n')
+        privateData.log.stream.write('*      STDOUT/STDERR LOG FILE      *\n')
+        privateData.log.stream.write('************************************\n')
+        privateData.log.stream.write(`Command:     ${privateData.cmd}\n`)
 
-        privateData.log.writeStream = fs.createWriteStream(path.join(privateData.log.path, privateData.log.filename))
+        if (privateData.ref) {
+          privateData.log.stream.write(`Reference:   ${privateData.ref}\n`)
+        }
+
+        privateData.log.stream.write('\n') // whitespace for readability
       }
 
       debug('START: attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
@@ -97,12 +106,17 @@ class Procmonrest {
       )
 
       sb.stdout.on('data', (data) => {
-        const lines = data.toString().split(/\r?\n/).filter(line => line.length > 0)
-
-        debug('STDOUT:', lines)
+        const lines = data
+          .toString()
+          .split(/\r?\n/)
+          .filter(line => line.length > 0)
 
         lines.forEach((line) => {
-          if (privateData.pattern.test(line)) {
+          if (privateData.log) {
+            privateData.log.stream.write(`STDOUT: ${line}\n`)
+          }
+
+          if (!privateData.ready && privateData.pattern.test(line)) {
             debug('START: process is ready!')
             privateData.ready = true
             resolve()
@@ -111,11 +125,16 @@ class Procmonrest {
       })
 
       sb.stderr.on('data', (data) => {
-        const lines = data.toString().split(/\r?\n/).filter(line => line.length > 0)
-        debug('STDERR:', lines)
+        if (privateData.log) {
+          data
+            .toString()
+            .split(/\r?\n/)
+            .filter(line => line.length > 0)
+            .forEach(line => privateData.log.stream.write(`STDERR: ${line}\n`))
+        }
       })
 
-      sb.once('exit', (code) => {
+      sb.once('exit', (code, signal) => {
         if (!privateData.ready) {
           const err = new Error('The process exited before indicating that it was ready for testing')
           err.exitCode = code
@@ -124,8 +143,10 @@ class Procmonrest {
           reject(err)
         }
 
-        if (privateData.log && privateData.log.writeStream) {
-          privateData.log.writeStream.end()
+        if (privateData.log && privateData.log.stream) {
+          // code may be 0 (which is a valid exit code), so do not evaluate that first
+          privateData.log.stream.write(`EXIT CODE: ${signal || code}\n`)
+          privateData.log.stream.end()
         }
 
         privateData.ready = false

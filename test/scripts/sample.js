@@ -5,3 +5,5 @@ global.setTimeout(() => {
 }, 500)
 
 console.log('ready')
+console.log('this will appear on stdout')
+console.error('this will appear on stderr')

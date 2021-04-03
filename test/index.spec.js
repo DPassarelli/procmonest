@@ -18,7 +18,7 @@ describe('the Procmonrest module', () => {
 
   describe('the constructor', () => {
     const ERR_INVALID_OPTIONS = 'The constructor for Procmonrest takes an options object with a required value for "waitFor".'
-    const ERR_INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location (folder, not file) on the local system.'
+    const ERR_INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
 
     it('must throw an error if there are no options provided', () => {
       expect(() => {
@@ -130,12 +130,16 @@ describe('the Procmonrest module', () => {
       describe('the rejection value', () => {
         it('must have the expected message', () => {
           const expected = 'The process exited before indicating that it was ready for testing'
-          expect(rejection).to.have.property('message', expected)
+          const actual = rejection.message
+
+          expect(actual).to.equal(expected)
         })
 
         it('must have the expected exit code', () => {
           const expected = 1
-          expect(rejection).to.have.property('exitCode', expected)
+          const actual = rejection.exitCode
+
+          expect(actual).to.equal(expected)
         })
       })
     })

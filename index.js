@@ -178,39 +178,33 @@ class Procmonrest {
    *
    * @return {Promise}
    */
-  stop () {
+  async stop () {
     const privateData = _.get(this)
 
     if (privateData && privateData.subProcess) {
-      return new Promise((resolve, reject) => {
-        debug('STOP: attempting to terminate process with id %d...', privateData.subProcess.pid)
+      debug('STOP: attempting to terminate process with id %d...', privateData.subProcess.pid)
 
-        terminate(privateData.subProcess.pid, (err) => {
-          privateData.ready = false
-          privateData.subProcess = null
+      try {
+        await terminate(privateData.subProcess.pid)
+        debug('STOP: ...done!')
+      } catch (err) {
+        const patternForMissingProcessId = /the process "\d+" not found/i
 
-          if (err) {
-            const patternForMissingProcessId = /the process "\d+" not found/i
-
-            if (patternForMissingProcessId.test(err.message)) {
-              debug('STOP: ...process was not found')
-              reject(new Error('There is nothing to stop. Please call start() first.'))
-            } else {
-              debug('STOP: ...an error occurred ->', err.message)
-              reject(err)
-            }
-
-            return
-          }
-
-          debug('STOP: ...done!')
-          resolve()
-        })
-      })
+        if (patternForMissingProcessId.test(err.message)) {
+          debug('STOP: ...process was not found')
+          throw new Error('There is nothing to stop. Please call start() first.')
+        } else {
+          debug('STOP: ...an error occurred ->', err.message)
+          throw err
+        }
+      } finally {
+        privateData.ready = false
+        privateData.subProcess = null
+      }
+    } else {
+      debug('STOP: process has not started')
+      throw new Error('There is nothing to stop. Please call start() first.')
     }
-
-    debug('STOP: process has not started')
-    return Promise.reject(new Error('There is nothing to stop. Please call start() first.'))
   }
 }
 

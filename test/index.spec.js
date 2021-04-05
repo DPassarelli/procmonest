@@ -8,6 +8,18 @@
  */
 const T = require('../index.js')
 
+/**
+ * [ERR_INVALID_OPTIONS description]
+ * @type {String}
+ */
+const ERR_INVALID_OPTIONS = 'The constructor for Procmonrest takes an options object with a required value for "waitFor".'
+
+/**
+ * [ERR_INVALID_LOG_PATH description]
+ * @type {String}
+ */
+const ERR_INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
+
 describe('the Procmonrest module', () => {
   /* eslint-disable no-unused-vars */
   it('must export a class', () => {
@@ -17,9 +29,6 @@ describe('the Procmonrest module', () => {
   })
 
   describe('the constructor', () => {
-    const ERR_INVALID_OPTIONS = 'The constructor for Procmonrest takes an options object with a required value for "waitFor".'
-    const ERR_INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
-
     it('must throw an error if there are no options provided', () => {
       expect(() => {
         const instance = new T()
@@ -141,6 +150,20 @@ describe('the Procmonrest module', () => {
 
           expect(actual).to.equal(expected)
         })
+      })
+    })
+
+    context.only('when the log path is not valid', () => {
+      it('must be rejected', () => {
+        const instance = new T({
+          command: global.scriptCommands.runsNormally,
+          waitFor: /ready/,
+          saveLogTo: '/this/path/does/not/exist/log.txt'
+        })
+
+        const promise = instance.start()
+
+        expect(promise).to.be.rejectedWith(ERR_INVALID_LOG_PATH)
       })
     })
   })

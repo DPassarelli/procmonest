@@ -11,6 +11,12 @@ const terminate = require('tree-kill')
  */
 const _ = new WeakMap()
 
+/**
+ * [INVALID_LOG_PATH description]
+ * @type {String}
+ */
+const INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
+
 class Procmonrest {
   /**
    * Options:
@@ -48,7 +54,7 @@ class Procmonrest {
         debug('log path set to "%s"', privateData.log.path)
       } catch (err) {
         debug('could not normalize log path "%s"', options.saveLogTo)
-        throw new Error('If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.')
+        throw new Error(INVALID_LOG_PATH)
       }
     }
 
@@ -80,7 +86,13 @@ class Procmonrest {
       if (privateData.log) {
         debug('START: creating write stream for log file "%s"', privateData.log.path)
 
-        privateData.log.stream = fs.createWriteStream(privateData.log.path)
+        try {
+          privateData.log.stream = fs.createWriteStream(privateData.log.path)
+        } catch {
+          reject(new Error(INVALID_LOG_PATH))
+          return
+        }
+
         privateData.log.stream.write('************************************\n')
         privateData.log.stream.write('*      STDOUT/STDERR LOG FILE      *\n')
         privateData.log.stream.write('************************************\n')
@@ -144,7 +156,7 @@ class Procmonrest {
         }
 
         if (privateData.log && privateData.log.stream) {
-          // code may be 0 (which is valid and should be reported), so do not evaluate that first
+          // code may be 0 (which is valid and should be reported), so do *not* evaluate that first
           privateData.log.stream.write(`EXIT CODE: ${signal || code}\n`)
           privateData.log.stream.end()
         }

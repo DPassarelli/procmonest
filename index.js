@@ -12,7 +12,7 @@ const terminate = require('tree-kill')
 const _ = new WeakMap()
 
 /**
- * [INVALID_LOG_PATH description]
+ * A shared error message for all problems related to the log file path.
  * @type {String}
  */
 const INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'

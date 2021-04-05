@@ -268,7 +268,11 @@ describe('the logging functionality', () => {
             return instance
               .start()
               .catch(() => {
-                /* ignore */
+                /**
+                 * This behavior is expected, and the `catch` block is required
+                 * (otherwise these tests won't complete). However, the error
+                 * can--and should--be ignored.
+                 */
               })
           })
       })

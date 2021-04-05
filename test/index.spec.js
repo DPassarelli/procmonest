@@ -9,13 +9,15 @@
 const T = require('../index.js')
 
 /**
- * [ERR_INVALID_OPTIONS description]
+ * The expected error message whenever a missing or incorrect constructor
+ * option is provided.
  * @type {String}
  */
 const ERR_INVALID_OPTIONS = 'The constructor for Procmonrest takes an options object with a required value for "waitFor".'
 
 /**
- * [ERR_INVALID_LOG_PATH description]
+ * The expected error message whenever the log file path is malformed or cannot
+ * be accessed.
  * @type {String}
  */
 const ERR_INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'

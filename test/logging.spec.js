@@ -240,5 +240,84 @@ describe('the logging functionality', () => {
         })
       })
     })
+
+    context('when the process exits with a non-zero code', () => {
+      /**
+       * An instance of the code under test.
+       * @type {Object}
+       */
+      let instance = null
+
+      /**
+       * The folder that the log file will be created in.
+       * @type {String}
+       */
+      let tempFolder = null
+
+      before(() => {
+        return fs.mkdtemp(path.join(os.tmpdir(), 'procmonrest-'))
+          .then((pathspec) => {
+            tempFolder = pathspec
+
+            instance = new T({
+              command: global.scriptCommands.exitsEarly,
+              waitFor: /ready/,
+              saveLogTo: path.join(tempFolder, 'test.log')
+            })
+
+            return instance
+              .start()
+              .catch(() => {
+                /* ignore */
+              })
+          })
+      })
+
+      after(() => {
+        return rmrf(tempFolder, { force: true })
+      })
+
+      describe('the created file', () => {
+        /**
+         * Information about the created log file.
+         * @type {Object}
+         */
+        const logFile = {
+          /**
+           * The name (with extension) of the log file.
+           * @type {String}
+           */
+          name: '',
+
+          /**
+           * The contents of the file, separated by newline character.
+           * @type {Array}
+           */
+          lines: []
+        }
+
+        before(() => {
+          return fs.readdir(tempFolder)
+            .then((list) => {
+              logFile.name = list[0]
+              return fs.readFile(path.join(tempFolder, logFile.name))
+            })
+            .then((contents) => {
+              logFile.lines = contents
+                .toString()
+                .split('\n')
+                .map(line => line.trim()) // remove any spaces, tabs, or \r chars
+                .filter(line => line.length > 0) // ignore empty lines
+            })
+        })
+
+        it('must end with the exit code from the child process', () => {
+          const pattern = /^exit code: 1$/i
+          const actual = logFile.lines[logFile.lines.length - 1]
+
+          expect(actual).to.match(pattern)
+        })
+      })
+    })
   })
 })

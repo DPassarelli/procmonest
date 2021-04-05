@@ -91,7 +91,7 @@ This method calls [tree-kill](https://www.npmjs.com/package/tree-kill) on the ch
 
 ## Safety features
 
-In order to avoid any misuse (whether intentional or not), the current working directory is set to the folder containing the parent project's `package.json` file.
+In an attempt to avoid any misuse (whether intentional or not), the current working directory for the child process will be the same as the parent.
 
 ## License
 

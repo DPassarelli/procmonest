@@ -47,7 +47,7 @@ class Procmonrest {
 
         debug('log path set to "%s"', privateData.log.path)
       } catch (err) {
-        debug('could not normalize "%s"', options.saveLogTo)
+        debug('could not normalize log path "%s"', options.saveLogTo)
         throw new Error('If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.')
       }
     }
@@ -144,7 +144,7 @@ class Procmonrest {
         }
 
         if (privateData.log && privateData.log.stream) {
-          // code may be 0 (which is a valid exit code), so do not evaluate that first
+          // code may be 0 (which is valid and should be reported), so do not evaluate that first
           privateData.log.stream.write(`EXIT CODE: ${signal || code}\n`)
           privateData.log.stream.end()
         }

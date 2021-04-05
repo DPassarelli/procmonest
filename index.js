@@ -67,57 +67,54 @@ class Procmonrest {
    *
    * @return {Promise}   Resolves to undefined.
    */
-  start () {
+  async start () {
     /**
-     * The child process itself.
-     * @type {ChildProcess}
+     * The directory that the child process will be executed in.
+     * @type {String}
      */
-    let sb = null
+    const workingDirectory = process.cwd()
 
-    return new Promise((resolve, reject) => {
-      const privateData = _.get(this)
+    const privateData = _.get(this)
 
-      /**
-       * The directory that the child process will be executed in.
-       * @type {String}
-       */
-      const workingDirectory = process.cwd()
-
-      if (privateData.log) {
+    if (privateData.log) {
+      await new Promise((resolve, reject) => {
         debug('START: creating write stream for log file "%s"', privateData.log.path)
 
-        try {
-          privateData.log.stream = fs.createWriteStream(privateData.log.path)
-        } catch {
+        privateData.log.stream = fs.createWriteStream(privateData.log.path)
+
+        privateData.log.stream.once('ready', resolve)
+
+        privateData.log.stream.once('error', () => {
           reject(new Error(INVALID_LOG_PATH))
-          return
-        }
+        })
+      })
 
-        privateData.log.stream.write('************************************\n')
-        privateData.log.stream.write('*      STDOUT/STDERR LOG FILE      *\n')
-        privateData.log.stream.write('************************************\n')
-        privateData.log.stream.write(`Command:     ${privateData.cmd}\n`)
+      privateData.log.stream.write('************************************\n')
+      privateData.log.stream.write('*      STDOUT/STDERR LOG FILE      *\n')
+      privateData.log.stream.write('************************************\n')
+      privateData.log.stream.write(`Command:     ${privateData.cmd}\n`)
 
-        if (privateData.ref) {
-          privateData.log.stream.write(`Reference:   ${privateData.ref}\n`)
-        }
-
-        privateData.log.stream.write('\n') // whitespace for readability
+      if (privateData.ref) {
+        privateData.log.stream.write(`Reference:   ${privateData.ref}\n`)
       }
 
-      debug('START: attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
-      debug('START: waiting for output to match %o', privateData.pattern)
+      privateData.log.stream.write('\n') // whitespace for readability
+    }
 
-      sb = childProcess.spawn(
-        privateData.cmd,
-        {
-          cwd: workingDirectory,
-          shell: true,
-          stdio: 'pipe'
-        }
-      )
+    debug('START: attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
+    debug('START: waiting for output to match %o', privateData.pattern)
 
-      sb.stdout.on('data', (data) => {
+    privateData.subProcess = childProcess.spawn(
+      privateData.cmd,
+      {
+        cwd: workingDirectory,
+        shell: true,
+        stdio: 'pipe'
+      }
+    )
+
+    return new Promise((resolve, reject) => {
+      privateData.subProcess.stdout.on('data', (data) => {
         const lines = data
           .toString()
           .split(/\r?\n/)
@@ -136,7 +133,7 @@ class Procmonrest {
         })
       })
 
-      sb.stderr.on('data', (data) => {
+      privateData.subProcess.stderr.on('data', (data) => {
         if (privateData.log) {
           data
             .toString()
@@ -146,7 +143,7 @@ class Procmonrest {
         }
       })
 
-      sb.once('exit', (code, signal) => {
+      privateData.subProcess.once('exit', (code, signal) => {
         if (!privateData.ready) {
           const err = new Error('The process exited before indicating that it was ready for testing')
           err.exitCode = code
@@ -164,8 +161,6 @@ class Procmonrest {
         privateData.ready = false
         privateData.subProcess = null
       })
-
-      privateData.subProcess = sb
     })
   }
 

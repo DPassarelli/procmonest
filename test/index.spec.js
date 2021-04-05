@@ -153,7 +153,7 @@ describe('the Procmonrest module', () => {
       })
     })
 
-    context.only('when the log path is not valid', () => {
+    context('when the log path is not valid', () => {
       it('must be rejected', () => {
         const instance = new T({
           command: global.scriptCommands.runsNormally,

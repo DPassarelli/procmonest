@@ -25,7 +25,7 @@ before_test:
 test_script:
   - npm run appveyor
 
-after_test:
+on_finish:
   - pwsh: |
         $webClient = New-Object System.Net.WebClient
         $webClient.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\test-results.xml))

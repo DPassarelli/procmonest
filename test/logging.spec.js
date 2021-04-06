@@ -116,9 +116,7 @@ describe('the logging functionality', () => {
         })
 
         it('must contain the child process command', () => {
-          const pattern = new RegExp(global.scriptCommands.runsNormally)
-          const actual = logFile.lines.find(line => pattern.test(line))
-
+          const actual = logFile.lines.find(line => line.includes(global.scriptCommands.runsNormally))
           expect(actual).to.not.equal(undefined)
         })
 

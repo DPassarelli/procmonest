@@ -19,11 +19,13 @@ install:
   - ps: Install-Product node $env:node_version
 
 before_test:
-  - npm --version
+  - npm install npm --global
   - npm install
 
 test_script:
   - npm run appveyor
+
+after_test:
   - pwsh: |
         $webClient = New-Object System.Net.WebClient
         $webClient.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\test-results.xml))

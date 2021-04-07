@@ -1,6 +1,6 @@
 # Procmonrest
 
-[![Linux Build Status](https://img.shields.io/travis/DPassarelli/procmonrest/master?label=Linux%20build&logo=travis)](https://travis-ci.com/DPassarelli/procmonrest)
+[![Linux Build Status](https://img.shields.io/travis/com/DPassarelli/procmonrest/master?label=Linux%20build&logo=travis)](https://travis-ci.com/DPassarelli/procmonrest)
 [![Windows Build Status](https://img.shields.io/appveyor/build/DPassarelli/procmonrest/master?label=Windows%20build&logo=appveyor)](https://ci.appveyor.com/project/DPassarelli/procmonrest?branch=master)
 [![Coverage Status](https://img.shields.io/coveralls/github/DPassarelli/procmonrest/master?logo=coveralls)](https://coveralls.io/github/DPassarelli/procmonrest?branch=master)
 

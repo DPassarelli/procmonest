@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0]
+
+### Added
+
+* By default, the spawned child's `stdout` and `stderr` are saved to a log file in the same directory as the file that imports `Procmonrest`. The `saveLogTo` option can be used to override this behavior.
+* The `envars` option can be used to set environment variables for the child process.
+
 ## [1.0.0] - 2021-04-06
 
 ### Added

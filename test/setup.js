@@ -14,5 +14,10 @@ global.scriptCommands = {
   /**
    * [noError description]
    */
-  exitsEarly: `node ${path.join(__dirname, './scripts/error.js')}`
+  exitsEarly: `node ${path.join(__dirname, './scripts/error.js')}`,
+
+  /**
+   * [noError description]
+   */
+  doesNotExit: `node ${path.join(__dirname, './scripts/server.js')}`
 }

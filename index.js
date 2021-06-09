@@ -17,6 +17,28 @@ const _ = new WeakMap()
  */
 const INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
 
+/**
+ * [formatDuration description]
+ *
+ * @param  {Number}   elapsedTime   The length of the duration in milliseconds.
+ *
+ * @return {String}
+ */
+function formatDuration (elapsedTime) {
+  if (elapsedTime < 10000) {
+    return `${Math.round(elapsedTime / 100) / 10}s`
+  }
+
+  if (elapsedTime < 60000) {
+    return `${Math.round(elapsedTime / 1000)}s`
+  }
+
+  const mins = Math.floor(elapsedTime / 60000)
+  const secs = Math.round((elapsedTime % 60000) / 1000)
+
+  return `${mins}m ${secs}s`
+}
+
 class Procmonrest {
   /**
    * Options:
@@ -42,7 +64,7 @@ class Procmonrest {
       cmd: options.command || 'npm start',
       pattern: options.waitFor,
       ready: false,
-      ref: options.reference || null
+      ref: options.reference
     }
 
     if (options.saveLogTo) {
@@ -74,6 +96,16 @@ class Procmonrest {
      */
     const workingDirectory = process.cwd()
 
+    /**
+     * [startTime description]
+     * @type {Date}
+     */
+    const startTime = new Date()
+
+    /**
+     * [privateData description]
+     * @type {Object}
+     */
     const privateData = _.get(this)
 
     if (privateData.log) {
@@ -93,6 +125,7 @@ class Procmonrest {
       privateData.log.stream.write('*      STDOUT/STDERR LOG FILE      *\n')
       privateData.log.stream.write('************************************\n')
       privateData.log.stream.write(`Command:     ${privateData.cmd}\n`)
+      privateData.log.stream.write(`Started at:  ${startTime.toLocaleString()}\n`)
 
       if (privateData.ref) {
         privateData.log.stream.write(`Reference:   ${privateData.ref}\n`)
@@ -126,7 +159,20 @@ class Procmonrest {
           }
 
           if (!privateData.ready && privateData.pattern.test(line)) {
-            debug('START: process is ready!')
+            /**
+             * [duration description]
+             * @type {Number}
+             */
+            const elapsedTime = Date.now() - startTime.getTime()
+
+            debug('START: process is ready! (%ds)', elapsedTime)
+
+            if (privateData.log) {
+              privateData.log.stream.write('\n') // whitespace for readability
+              privateData.log.stream.write(`Ready in:    ${formatDuration(elapsedTime)}\n`)
+              privateData.log.stream.write('\n') // whitespace for readability
+            }
+
             privateData.ready = true
             resolve()
           }
@@ -152,9 +198,12 @@ class Procmonrest {
           reject(err)
         }
 
-        if (privateData.log && privateData.log.stream) {
-          // code may be 0 (which is valid and should be reported), so do *not* evaluate that first
-          privateData.log.stream.write(`EXIT CODE: ${signal || code}\n`)
+        if (privateData.log) {
+          privateData.log.stream.write('\n') // whitespace for readability
+
+          // exit code may be 0 (which is valid and should be reported), so do *not* evaluate that first
+          privateData.log.stream.write(`Exit code:   ${signal || code}\n`)
+
           privateData.log.stream.end()
         }
 

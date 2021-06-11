@@ -18,8 +18,7 @@ const _ = new WeakMap()
 const INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
 
 /**
- * Formats an elapsed time span for human-readable display. Used to report the
- * amount of time that the child process was running for.
+ * Formats an elapsed time span for human-readable display.
  *
  * @param  {Number}   elapsedTime   The length of the duration in milliseconds.
  *
@@ -146,13 +145,13 @@ class Procmonrest {
     const workingDirectory = process.cwd()
 
     /**
-     * [startTime description]
+     * The time that the child process was started.
      * @type {Date}
      */
     const startTime = new Date()
 
     /**
-     * [privateData description]
+     * Data belonging to this instance.
      * @type {Object}
      */
     const privateData = _.get(this)
@@ -209,12 +208,13 @@ class Procmonrest {
 
           if (!privateData.ready && privateData.pattern.test(line)) {
             /**
-             * [duration description]
+             * The amount of time elapsed since the child process was started
+             * in milliseconds.
              * @type {Number}
              */
             const elapsedTime = Date.now() - startTime.getTime()
 
-            debug('START: process is ready! (%ds)', elapsedTime)
+            debug('START: process is ready! (%dms)', elapsedTime)
 
             if (privateData.log) {
               privateData.log.stream.write('\n') // whitespace for readability

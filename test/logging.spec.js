@@ -202,343 +202,211 @@ describe('the logging functionality', () => {
      */
     let logFileContents = null
 
-    before(() => {
-      return rmrf(path.join(__dirname, '*.log'))
-        .then(() => {
-          instance = new T({
-            command: global.scriptCommands.runsNormally,
-            waitFor: /ready/
-          })
+    context('when the process runs normally', () => {
+      before(() => {
+        return rmrf(path.join(__dirname, '*.log'))
+          .then(() => {
+            instance = new T({
+              command: global.scriptCommands.runsNormally,
+              waitFor: /ready/
+            })
 
-          return instance.start()
-        })
-        .then(() => {
-          return new Promise((resolve) => {
-            global.setTimeout(resolve, DELAY) // wait for process to exit on its own
+            return instance.start()
           })
-        })
-        .then(() => {
-          return fs.readdir(__dirname)
-        })
-        .then((contents) => {
-          logFileName = contents.find((name) => { return name.endsWith('.log') })
-          return fs.readFile(path.join(__dirname, logFileName))
-        })
-        .then((contents) => {
-          logFileContents = contents
-            .toString()
-            .split('\n')
-            .map(line => line.trim()) // remove any spaces, tabs, or \r chars
-            .filter(line => line.length > 0) // ignore empty lines
-        })
+          .then(() => {
+            return new Promise((resolve) => {
+              global.setTimeout(resolve, DELAY) // wait for process to exit on its own
+            })
+          })
+          .then(() => {
+            return fs.readdir(__dirname)
+          })
+          .then((contents) => {
+            logFileName = contents.find((name) => { return name.endsWith('.log') })
+            return fs.readFile(path.join(__dirname, logFileName))
+          })
+          .then((contents) => {
+            logFileContents = contents
+              .toString()
+              .split('\n')
+              .map(line => line.trim()) // remove any spaces, tabs, or \r chars
+              .filter(line => line.length > 0) // ignore empty lines
+          })
+      })
+
+      it('must have the expected name', () => {
+        const expected = path.basename(__filename).replace(/\.js$/i, '.log')
+        const actual = logFileName
+
+        expect(actual).to.equal(expected)
+      })
+
+      it('must not be empty', () => {
+        expect(logFileContents).to.not.be.empty // eslint-disable-line no-unused-expressions
+      })
+
+      it('must contain the child process command', () => {
+        const actual = logFileContents.find(line => line.includes(global.scriptCommands.runsNormally))
+        expect(actual).to.not.equal(undefined)
+      })
+
+      it('must not contain a "reference" line', () => {
+        const pattern = /^reference:/i
+        const actual = logFileContents.find(line => pattern.test(line))
+
+        expect(actual).to.equal(undefined)
+      })
+
+      it('must contain the output from stdout', () => {
+        const pattern = /^stdout:\s+.+$/i
+        const actual = logFileContents.filter(line => pattern.test(line))
+
+        expect(actual).to.have.length(2)
+      })
+
+      it('must contain the output from stderr', () => {
+        const pattern = /^stderr:\s+.+$/i
+        const actual = logFileContents.filter(line => pattern.test(line))
+
+        expect(actual).to.have.length(1)
+      })
+
+      it('must end with the exit code from the child process', () => {
+        const pattern = /^exit code:\s+0$/i
+        const actual = logFileContents[logFileContents.length - 1]
+
+        expect(actual).to.match(pattern)
+      })
     })
 
-    it('must have the expected name', () => {
-      const expected = path.basename(__filename.replace(/\.js$/i, '.log'))
-      const actual = logFileName
+    context('when the "reference" option is specified', () => {
+      before(() => {
+        return rmrf(path.join(__dirname, '*.log'))
+          .then(() => {
+            instance = new T({
+              command: global.scriptCommands.runsNormally,
+              reference: 'TEST',
+              waitFor: /ready/
+            })
 
-      expect(actual).to.equal(expected)
+            return instance.start()
+          })
+          .then(() => {
+            return new Promise((resolve) => {
+              global.setTimeout(resolve, DELAY) // wait for process to exit on its own
+            })
+          })
+          .then(() => {
+            return fs.readdir(__dirname)
+          })
+          .then((contents) => {
+            logFileName = contents.find((name) => { return name.endsWith('.log') })
+            return fs.readFile(path.join(__dirname, logFileName))
+          })
+          .then((contents) => {
+            logFileContents = contents
+              .toString()
+              .split('\n')
+              .map(line => line.trim()) // remove any spaces, tabs, or \r chars
+              .filter(line => line.length > 0) // ignore empty lines
+          })
+      })
+
+      it('must contain a "reference" line', () => {
+        const pattern = /^Reference:\s+TEST$/
+        const actual = logFileContents.find(line => pattern.test(line))
+
+        expect(actual).to.not.equal(undefined)
+      })
     })
 
-    it('must not be empty', () => {
-      expect(logFileContents).to.not.be.empty // eslint-disable-line no-unused-expressions
+    context('when the process exits with a non-zero code', () => {
+      before(() => {
+        return rmrf(path.join(__dirname, '*.log'))
+          .then(() => {
+            instance = new T({
+              command: global.scriptCommands.exitsEarly,
+              waitFor: /ready/
+            })
+
+            return instance.start()
+          })
+          .catch(() => {
+            /**
+             * This behavior is expected, and the `catch` block is required
+             * (otherwise these tests won't work).
+             */
+          })
+          .then(() => {
+            return fs.readdir(__dirname)
+          })
+          .then((contents) => {
+            logFileName = contents.find((name) => { return name.endsWith('.log') })
+            return fs.readFile(path.join(__dirname, logFileName))
+          })
+          .then((contents) => {
+            logFileContents = contents
+              .toString()
+              .split('\n')
+              .map(line => line.trim()) // remove any spaces, tabs, or \r chars
+              .filter(line => line.length > 0) // ignore empty lines
+          })
+      })
+
+      it('must end with the exit code from the child process', () => {
+        const pattern = /^exit code:\s+1$/i
+        const actual = logFileContents[logFileContents.length - 1]
+
+        expect(actual).to.match(pattern)
+      })
+    })
+
+    context('when the process is forced to exit', () => {
+      before(() => {
+        return rmrf(path.join(__dirname, '*.log'))
+          .then(() => {
+            instance = new T({
+              command: global.scriptCommands.doesNotExit,
+              waitFor: /ready/
+            })
+
+            return instance.start()
+          })
+          .then(() => {
+            return new Promise((resolve) => {
+              global.setTimeout(resolve, 800)
+            })
+          })
+          .then(() => {
+            return instance.stop()
+          })
+          .then(() => {
+            return new Promise((resolve) => {
+              global.setTimeout(resolve, 400) // this is needed for the final write to the log file
+            })
+          })
+          .then(() => {
+            return fs.readdir(__dirname)
+          })
+          .then((contents) => {
+            logFileName = contents.find((name) => { return name.endsWith('.log') })
+            return fs.readFile(path.join(__dirname, logFileName))
+          })
+          .then((contents) => {
+            logFileContents = contents
+              .toString()
+              .split('\n')
+              .map(line => line.trim()) // remove any spaces, tabs, or \r chars
+              .filter(line => line.length > 0) // ignore empty lines
+          })
+      })
+
+      it('must end with the exit code from the child process', () => {
+        const pattern = /^exit code:\s+sigterm$/i
+        const actual = logFileContents[logFileContents.length - 1]
+
+        expect(actual).to.match(pattern)
+      })
     })
   })
-
-  //       it('must contain the child process command', () => {
-  //         const actual = logFile.lines.find(line => line.includes(global.scriptCommands.runsNormally))
-  //         expect(actual).to.not.equal(undefined)
-  //       })
-
-  //       it('must not contain a "reference" line', () => {
-  //         const pattern = /^reference:/i
-  //         const actual = logFile.lines.find(line => pattern.test(line))
-
-  //         expect(actual).to.equal(undefined)
-  //       })
-
-  //       it('must contain the output from stdout', () => {
-  //         const pattern = /^stdout:\s+.+$/i
-  //         const actual = logFile.lines.filter(line => pattern.test(line))
-
-  //         expect(actual).to.have.length(2)
-  //       })
-
-  //       it('must contain the output from stderr', () => {
-  //         const pattern = /^stderr:\s+.+$/i
-  //         const actual = logFile.lines.filter(line => pattern.test(line))
-
-  //         expect(actual).to.have.length(1)
-  //       })
-
-  //       it('must end with the exit code from the child process', () => {
-  //         const pattern = /^exit code:\s+0$/i
-  //         const actual = logFile.lines[logFile.lines.length - 1]
-
-  //         expect(actual).to.match(pattern)
-  //       })
-  //     })
-  //   })
-
-  //   context('with a value for "reference"', () => {
-  //     /**
-  //      * An instance of the code under test.
-  //      * @type {Object}
-  //      */
-  //     let instance = null
-
-  //     /**
-  //      * The folder that the log file will be created in.
-  //      * @type {String}
-  //      */
-  //     let tempFolder = null
-
-  //     before(() => {
-  //       return fs.mkdtemp(path.join(os.tmpdir(), 'procmonrest-'))
-  //         .then((pathspec) => {
-  //           tempFolder = pathspec
-
-  //           instance = new T({
-  //             command: global.scriptCommands.runsNormally,
-  //             waitFor: /ready/,
-  //             saveLogTo: path.join(tempFolder, 'test.log'),
-  //             reference: 'TEST'
-  //           })
-
-  //           return instance
-  //             .start()
-  //             .then(() => {
-  //               return new Promise((resolve) => {
-  //                 global.setTimeout(resolve, DELAY) // wait for process to exit on its own
-  //               })
-  //             })
-  //         })
-  //     })
-
-  //     after(() => {
-  //       return rmrf(tempFolder, { force: true })
-  //     })
-
-  //     describe('the created file', () => {
-  //       /**
-  //        * Information about the created log file.
-  //        * @type {Object}
-  //        */
-  //       const logFile = {
-  //         /**
-  //          * The name (with extension) of the log file.
-  //          * @type {String}
-  //          */
-  //         name: '',
-
-  //         /**
-  //          * The contents of the file, separated by newline character.
-  //          * @type {Array}
-  //          */
-  //         lines: []
-  //       }
-
-  //       before(() => {
-  //         return fs.readdir(tempFolder)
-  //           .then((list) => {
-  //             logFile.name = list[0]
-  //             return fs.readFile(path.join(tempFolder, logFile.name))
-  //           })
-  //           .then((contents) => {
-  //             logFile.lines = contents
-  //               .toString()
-  //               .split('\n')
-  //               .map(line => line.trim()) // remove any spaces, tabs, or \r chars
-  //               .filter(line => line.length > 0) // ignore empty lines
-  //           })
-  //       })
-
-  //       it('must have the expected name', () => {
-  //         const expected = 'test.log'
-  //         const actual = logFile.name
-
-  //         expect(actual).to.equal(expected)
-  //       })
-
-  //       it('must contain a "reference" line', () => {
-  //         const pattern = /^Reference:\s+TEST$/
-  //         const actual = logFile.lines.find(line => pattern.test(line))
-
-  //         expect(actual).to.not.equal(undefined)
-  //       })
-  //     })
-  //   })
-
-  //   context('when the process exits with a non-zero code', () => {
-  //     /**
-  //      * An instance of the code under test.
-  //      * @type {Object}
-  //      */
-  //     let instance = null
-
-  //     /**
-  //      * The folder that the log file will be created in.
-  //      * @type {String}
-  //      */
-  //     let tempFolder = null
-
-  //     before(() => {
-  //       return fs.mkdtemp(path.join(os.tmpdir(), 'procmonrest-'))
-  //         .then((pathspec) => {
-  //           tempFolder = pathspec
-
-  //           instance = new T({
-  //             command: global.scriptCommands.exitsEarly,
-  //             waitFor: /ready/,
-  //             saveLogTo: path.join(tempFolder, 'test.log')
-  //           })
-
-  //           return instance
-  //             .start()
-  //             .catch(() => {
-  //               /**
-  //                * This behavior is expected, and the `catch` block is required
-  //                * (otherwise these tests won't complete). However, the error
-  //                * can--and should--be ignored.
-  //                */
-  //             })
-  //         })
-  //     })
-
-  //     after(() => {
-  //       return rmrf(tempFolder, { force: true })
-  //     })
-
-  //     describe('the created file', () => {
-  //       /**
-  //        * Information about the created log file.
-  //        * @type {Object}
-  //        */
-  //       const logFile = {
-  //         /**
-  //          * The name (with extension) of the log file.
-  //          * @type {String}
-  //          */
-  //         name: '',
-
-  //         /**
-  //          * The contents of the file, separated by newline character.
-  //          * @type {Array}
-  //          */
-  //         lines: []
-  //       }
-
-  //       before(() => {
-  //         return fs.readdir(tempFolder)
-  //           .then((list) => {
-  //             logFile.name = list[0]
-  //             return fs.readFile(path.join(tempFolder, logFile.name))
-  //           })
-  //           .then((contents) => {
-  //             logFile.lines = contents
-  //               .toString()
-  //               .split('\n')
-  //               .map(line => line.trim()) // remove any spaces, tabs, or \r chars
-  //               .filter(line => line.length > 0) // ignore empty lines
-  //           })
-  //       })
-
-  //       it('must end with the exit code from the child process', () => {
-  //         const pattern = /^exit code:\s+1$/i
-  //         const actual = logFile.lines[logFile.lines.length - 1]
-
-  //         expect(actual).to.match(pattern)
-  //       })
-  //     })
-  //   })
-
-  //   context('when the process is forced to exit', () => {
-  //     /**
-  //      * An instance of the code under test.
-  //      * @type {Object}
-  //      */
-  //     let instance = null
-
-  //     /**
-  //      * The folder that the log file will be created in.
-  //      * @type {String}
-  //      */
-  //     let tempFolder = null
-
-  //     before(() => {
-  //       return fs.mkdtemp(path.join(os.tmpdir(), 'procmonrest-'))
-  //         .then((pathspec) => {
-  //           tempFolder = pathspec
-
-  //           instance = new T({
-  //             command: global.scriptCommands.doesNotExit,
-  //             waitFor: /ready/,
-  //             saveLogTo: path.join(tempFolder, 'test.log')
-  //           })
-
-  //           return instance
-  //             .start()
-  //             .then(() => {
-  //               return new Promise((resolve) => {
-  //                 global.setTimeout(resolve, 800)
-  //               })
-  //             })
-  //             .then(() => {
-  //               return instance.stop()
-  //             })
-  //             .then(() => {
-  //               return new Promise((resolve) => {
-  //                 global.setTimeout(resolve, 800) // this is needed for the final write to the log file
-  //               })
-  //             })
-  //         })
-  //     })
-
-  //     after(() => {
-  //       return rmrf(tempFolder, { force: true })
-  //     })
-
-  //     describe('the created file', () => {
-  //       /**
-  //        * Information about the created log file.
-  //        * @type {Object}
-  //        */
-  //       const logFile = {
-  //         /**
-  //          * The name (with extension) of the log file.
-  //          * @type {String}
-  //          */
-  //         name: '',
-
-  //         /**
-  //          * The contents of the file, separated by newline character.
-  //          * @type {Array}
-  //          */
-  //         lines: []
-  //       }
-
-  //       before(() => {
-  //         return fs.readdir(tempFolder)
-  //           .then((list) => {
-  //             logFile.name = list[0]
-  //             return fs.readFile(path.join(tempFolder, logFile.name))
-  //           })
-  //           .then((contents) => {
-  //             logFile.lines = contents
-  //               .toString()
-  //               .split('\n')
-  //               .map(line => line.trim()) // remove any spaces, tabs, or \r chars
-  //               .filter(line => line.length > 0) // ignore empty lines
-  //           })
-  //       })
-
-  //       it('must end with the terminating signal', () => {
-  //         const pattern = /^exit code:\s+sigterm$/i
-  //         const actual = logFile.lines[logFile.lines.length - 1]
-
-  //         expect(actual).to.match(pattern)
-  //       })
-  //     })
-  //   })
-  // })
 })

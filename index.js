@@ -27,15 +27,15 @@ const INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a v
  */
 function formatDuration (elapsedTime) {
   if (elapsedTime < 10000) {
-    return `${Math.round(elapsedTime / 100) / 10}s`
+    return `${Math.ceil(elapsedTime / 100) / 10}s`
   }
 
   if (elapsedTime < 60000) {
-    return `${Math.round(elapsedTime / 1000)}s`
+    return `${Math.ceil(elapsedTime / 1000)}s`
   }
 
   const mins = Math.floor(elapsedTime / 60000)
-  const secs = Math.round((elapsedTime % 60000) / 1000)
+  const secs = Math.ceil((elapsedTime % 60000) / 1000)
 
   return `${mins}m ${secs}s`
 }
@@ -51,7 +51,7 @@ function getFullPathOfCaller () {
    * in a stack trace.
    * @type {RegExp}
    */
-  const patternForFilePath = /(?<pathspec>\/.+):\d+:\d+\)?$/
+  const patternForFilePath = /(?<pathspec>([A-Z]:\\|\/).+):\d+:\d+\)?$/i
 
   /**
    * A temporary object used to obtain the current stack trace.
@@ -73,6 +73,7 @@ function getFullPathOfCaller () {
    */
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].trim().startsWith('at new Procmonrest')) {
+      // console.log(lines[i+1])
       return lines[i + 1].match(patternForFilePath).groups.pathspec
     }
   }

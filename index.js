@@ -18,7 +18,8 @@ const _ = new WeakMap()
 const INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
 
 /**
- * [formatDuration description]
+ * Formats an elapsed time span for human-readable display. Used to report the
+ * amount of time that the child process was running for.
  *
  * @param  {Number}   elapsedTime   The length of the duration in milliseconds.
  *
@@ -37,6 +38,44 @@ function formatDuration (elapsedTime) {
   const secs = Math.round((elapsedTime % 60000) / 1000)
 
   return `${mins}m ${secs}s`
+}
+
+/**
+ * Returns the name of the script that created this instance of Procmonrest.
+ *
+ * @return {String}
+ */
+function getFullPathOfCaller () {
+  /**
+   * A regular expression for capturing the full path of the script from a line
+   * in a stack trace.
+   * @type {RegExp}
+   */
+  const patternForFilePath = /(?<pathspec>\/.+):\d+:\d+\)?$/
+
+  /**
+   * A temporary object used to obtain the current stack trace.
+   * @type {Error}
+   */
+  const err = new Error()
+
+  /**
+   * The list of lines from the stack trace, excluding the starting one (which
+   * only contains the text "Error")
+   * @type {Array}
+   */
+  const lines = err.stack.split('\n').slice(1)
+
+  /**
+   * Enumerate thru the lines of the stack trace until finding the one that
+   * occurs _after_ "new Procmonrest". This is the script that called the
+   * constructor.
+   */
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().startsWith('at new Procmonrest')) {
+      return lines[i + 1].match(patternForFilePath).groups.pathspec
+    }
+  }
 }
 
 class Procmonrest {
@@ -62,22 +101,31 @@ class Procmonrest {
 
     const privateData = {
       cmd: options.command || 'npm start',
+      log: false,
       pattern: options.waitFor,
       ready: false,
       ref: options.reference
     }
 
-    if (options.saveLogTo) {
+    if (options.saveLogTo === undefined) {
+      privateData.log = {
+        path: getFullPathOfCaller().replace(/\.js$/, '.log')
+      }
+    } else if (options.saveLogTo) {
       try {
         privateData.log = {
           path: path.normalize(options.saveLogTo)
         }
-
-        debug('log path set to "%s"', privateData.log.path)
       } catch (err) {
         debug('could not normalize log path "%s"', options.saveLogTo)
         throw new Error(INVALID_LOG_PATH)
       }
+    }
+
+    if (privateData.log) {
+      debug('log path set to "%s"', privateData.log.path)
+    } else {
+      debug('no log path set')
     }
 
     _.set(this, privateData)

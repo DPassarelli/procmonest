@@ -68,7 +68,7 @@ Instances of `Procmonrest` must be created using the `new` keyword.
 | `command` | {String?} | The command to run (typically, whatever is used to start the local server). Defaults to `npm start`. |
 | `envars` | {Object?} | If specified, environment variables for the child process. Defaults to `{ NODE_ENV: 'test' }`. |
 | `reference` | {String?} | If specified, then this value will be noted inside the log file. |
-| `saveLogTo` | {String?} | If specified, then the `stdout` and `stderr` output of the child process will be saved to this location (instead of the default). It must be an absolute path spec including the file name. Use `null` to prevent the creation of a log file altogether. |
+| `saveLogTo` | {String?} | If specified, then the `stdout` and `stderr` output of the child process will be saved to this location (instead of the default). It must be an absolute path spec including the file name. Use `null` or `false` to prevent the creation of a log file altogether. |
 | `waitFor` | {RegExp} | A [regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) that each line of output from the child process will be tested against. As soon as a match is made, then the process will be considered "ready for testing". | 
 
 ### Properties

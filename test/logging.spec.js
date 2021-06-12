@@ -353,7 +353,7 @@ describe('the logging functionality', () => {
           })
       })
 
-      it('must end with the exit code from the child process', () => {
+      it('must end with the correct information', () => {
         const pattern = /^exit code:\s+1$/i
         const actual = logFileContents[logFileContents.length - 1]
 
@@ -401,8 +401,13 @@ describe('the logging functionality', () => {
           })
       })
 
-      it('must end with the exit code from the child process', () => {
-        const pattern = /^exit code:\s+sigterm$/i
+      it('must end with the correct information', () => {
+        const pattern = (
+          os.platform() === 'win32'
+            ? /^exit code:\s+\(forcibly terminated\)$/i
+            : /^exit code:\s+sigterm$/i
+        )
+
         const actual = logFileContents[logFileContents.length - 1]
 
         expect(actual).to.match(pattern)

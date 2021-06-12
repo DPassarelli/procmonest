@@ -103,7 +103,6 @@ class Procmonrest {
       cmd: options.command || 'npm start',
       log: false,
       pattern: options.waitFor,
-      ready: false,
       ref: options.reference
     }
 
@@ -185,6 +184,10 @@ class Procmonrest {
     debug('START: attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
     debug('START: waiting for output to match %o', privateData.pattern)
 
+    // reset flags
+    privateData.ready = false
+    privateData.forced = false
+
     privateData.subProcess = childProcess.spawn(
       privateData.cmd,
       {
@@ -193,6 +196,10 @@ class Procmonrest {
         stdio: 'pipe'
       }
     )
+
+    privateData.subProcess.once('spawn', () => {
+      debug('START: process %d has been spawned', privateData.subProcess.pid)
+    })
 
     return new Promise((resolve, reject) => {
       privateData.subProcess.stdout.on('data', (data) => {
@@ -214,7 +221,7 @@ class Procmonrest {
              */
             const elapsedTime = Date.now() - startTime.getTime()
 
-            debug('START: process is ready! (%dms)', elapsedTime)
+            debug('START: process %d is ready! (%dms)', privateData.subProcess.pid, elapsedTime)
 
             if (privateData.log) {
               privateData.log.stream.write('\n') // whitespace for readability
@@ -250,13 +257,16 @@ class Procmonrest {
         if (privateData.log) {
           privateData.log.stream.write('\n') // whitespace for readability
 
-          // exit code may be 0 (which is valid and should be reported), so do *not* evaluate that first
-          privateData.log.stream.write(`Exit code:   ${signal || code}\n`)
+          if (privateData.forced && signal == null) {
+            // exit code may be 0 (which is valid and should be reported), so do *not* evaluate that first
+            privateData.log.stream.write('Exit code:   (forcibly terminated)\n')
+          } else {
+            privateData.log.stream.write(`Exit code:   ${signal || code}\n`)
+          }
 
           privateData.log.stream.end()
         }
 
-        privateData.ready = false
         privateData.subProcess = null
       })
     })
@@ -268,7 +278,8 @@ class Procmonrest {
    * @return {Boolean}
    */
   get isRunning () {
-    return _.get(this).ready
+    const privateData = _.get(this)
+    return (privateData.ready || false) && !privateData.forced
   }
 
   /**
@@ -280,23 +291,13 @@ class Procmonrest {
     const privateData = _.get(this)
 
     if (privateData && privateData.subProcess) {
-      debug('STOP: attempting to terminate process with id %d...', privateData.subProcess.pid)
+      debug('STOP: forcibly terminating process %d...', privateData.subProcess.pid)
+      privateData.forced = true
 
       try {
         await terminate(privateData.subProcess.pid)
         debug('STOP: ...done!')
-      } catch (err) {
-        const patternForMissingProcessId = /the process "\d+" not found/i
-
-        if (patternForMissingProcessId.test(err.message)) {
-          debug('STOP: ...process was not found')
-          throw new Error('There is nothing to stop. Please call start() first.')
-        } else {
-          debug('STOP: ...an error occurred ->', err.message)
-          throw err
-        }
       } finally {
-        privateData.ready = false
         privateData.subProcess = null
       }
     } else {

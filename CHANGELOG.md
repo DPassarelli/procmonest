@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0]
+
+### Added
+
+* The `saveLogTo` option can still be used to specify the location of the log file; however, it will now default to the same location as the file that calls `new Procmonrest()`.
+
+
 ## [1.0.0] - 2021-04-06
 
 ### Added

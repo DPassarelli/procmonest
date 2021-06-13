@@ -15,13 +15,6 @@ const T = require('../index.js')
  */
 const ERR_INVALID_OPTIONS = 'The constructor for Procmonrest takes an options object with a required value for "waitFor".'
 
-/**
- * The expected error message whenever the log file path is malformed or cannot
- * be accessed.
- * @type {String}
- */
-const ERR_INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
-
 describe('the Procmonrest module', () => {
   /* eslint-disable no-unused-vars */
   it('must export a class', () => {
@@ -59,24 +52,6 @@ describe('the Procmonrest module', () => {
       expect(() => {
         const instance = new T({ waitFor: /something/ })
       }).to.not.throw(ERR_INVALID_OPTIONS)
-    })
-
-    it('must not throw an error if the options include a value for "saveLogTo" that is `null`', () => {
-      expect(() => {
-        const instance = new T({
-          waitFor: /something/,
-          saveLogTo: null
-        })
-      }).to.not.throw(ERR_INVALID_LOG_PATH)
-    })
-
-    it('must throw an error if the options include a value for "saveLogTo" that is not a string', () => {
-      expect(() => {
-        const instance = new T({
-          waitFor: /something/,
-          saveLogTo: [404]
-        })
-      }).to.throw(ERR_INVALID_LOG_PATH)
     })
   })
   /* eslint-enable no-unused-vars */
@@ -152,20 +127,6 @@ describe('the Procmonrest module', () => {
 
           expect(actual).to.equal(expected)
         })
-      })
-    })
-
-    context('when the log path is not valid', () => {
-      it('must be rejected', () => {
-        const instance = new T({
-          command: global.scriptCommands.runsNormally,
-          waitFor: /ready/,
-          saveLogTo: '/this/path/does/not/exist/log.txt'
-        })
-
-        const promise = instance.start()
-
-        expect(promise).to.be.rejectedWith(ERR_INVALID_LOG_PATH)
       })
     })
   })

@@ -17,6 +17,67 @@ const _ = new WeakMap()
  */
 const INVALID_LOG_PATH = 'If specified, the "saveLogTo" option must refer to a valid location that this proces has write-access to.'
 
+/**
+ * Formats an elapsed time span for human-readable display.
+ *
+ * @param  {Number}   elapsedTime   The length of the duration in milliseconds.
+ *
+ * @return {String}
+ */
+function formatDuration (elapsedTime) {
+  if (elapsedTime < 10000) {
+    return `${Math.ceil(elapsedTime / 100) / 10}s`
+  }
+
+  if (elapsedTime < 60000) {
+    return `${Math.ceil(elapsedTime / 1000)}s`
+  }
+
+  const mins = Math.floor(elapsedTime / 60000)
+  const secs = Math.ceil((elapsedTime % 60000) / 1000)
+
+  return `${mins}m ${secs}s`
+}
+
+/**
+ * Returns the name of the script that created this instance of Procmonrest.
+ *
+ * @return {String}
+ */
+function getFullPathOfCaller () {
+  /**
+   * A regular expression for capturing the full path of the script from a line
+   * in a stack trace.
+   * @type {RegExp}
+   */
+  const patternForFilePath = /(?<pathspec>([A-Z]:\\|\/).+):\d+:\d+\)?$/i
+
+  /**
+   * A temporary object used to obtain the current stack trace.
+   * @type {Error}
+   */
+  const err = new Error()
+
+  /**
+   * The list of lines from the stack trace, excluding the starting one (which
+   * only contains the text "Error")
+   * @type {Array}
+   */
+  const lines = err.stack.split('\n').slice(1)
+
+  /**
+   * Enumerate thru the lines of the stack trace until finding the one that
+   * occurs _after_ "new Procmonrest". This is the script that called the
+   * constructor.
+   */
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().startsWith('at new Procmonrest')) {
+      // console.log(lines[i+1])
+      return lines[i + 1].match(patternForFilePath).groups.pathspec
+    }
+  }
+}
+
 class Procmonrest {
   /**
    * Options:
@@ -40,22 +101,30 @@ class Procmonrest {
 
     const privateData = {
       cmd: options.command || 'npm start',
+      log: false,
       pattern: options.waitFor,
-      ready: false,
-      ref: options.reference || null
+      ref: options.reference
     }
 
-    if (options.saveLogTo) {
+    if (options.saveLogTo === undefined) {
+      privateData.log = {
+        path: getFullPathOfCaller().replace(/\.js$/, '.log')
+      }
+    } else if (options.saveLogTo) {
       try {
         privateData.log = {
           path: path.normalize(options.saveLogTo)
         }
-
-        debug('log path set to "%s"', privateData.log.path)
       } catch (err) {
         debug('could not normalize log path "%s"', options.saveLogTo)
         throw new Error(INVALID_LOG_PATH)
       }
+    }
+
+    if (privateData.log) {
+      debug('log path set to "%s"', privateData.log.path)
+    } else {
+      debug('no log path set')
     }
 
     _.set(this, privateData)
@@ -74,6 +143,16 @@ class Procmonrest {
      */
     const workingDirectory = process.cwd()
 
+    /**
+     * The time that the child process was started.
+     * @type {Date}
+     */
+    const startTime = new Date()
+
+    /**
+     * Data belonging to this instance.
+     * @type {Object}
+     */
     const privateData = _.get(this)
 
     if (privateData.log) {
@@ -93,6 +172,7 @@ class Procmonrest {
       privateData.log.stream.write('*      STDOUT/STDERR LOG FILE      *\n')
       privateData.log.stream.write('************************************\n')
       privateData.log.stream.write(`Command:     ${privateData.cmd}\n`)
+      privateData.log.stream.write(`Started at:  ${startTime.toLocaleString()}\n`)
 
       if (privateData.ref) {
         privateData.log.stream.write(`Reference:   ${privateData.ref}\n`)
@@ -104,6 +184,10 @@ class Procmonrest {
     debug('START: attempting to start cmd "%s" with cwd "%s"', privateData.cmd, workingDirectory)
     debug('START: waiting for output to match %o', privateData.pattern)
 
+    // reset flags
+    privateData.ready = false
+    privateData.forced = false
+
     privateData.subProcess = childProcess.spawn(
       privateData.cmd,
       {
@@ -112,6 +196,10 @@ class Procmonrest {
         stdio: 'pipe'
       }
     )
+
+    privateData.subProcess.once('spawn', () => {
+      debug('START: process %d has been spawned', privateData.subProcess.pid)
+    })
 
     return new Promise((resolve, reject) => {
       privateData.subProcess.stdout.on('data', (data) => {
@@ -126,7 +214,21 @@ class Procmonrest {
           }
 
           if (!privateData.ready && privateData.pattern.test(line)) {
-            debug('START: process is ready!')
+            /**
+             * The amount of time elapsed since the child process was started
+             * in milliseconds.
+             * @type {Number}
+             */
+            const elapsedTime = Date.now() - startTime.getTime()
+
+            debug('START: process %d is ready! (%dms)', privateData.subProcess.pid, elapsedTime)
+
+            if (privateData.log) {
+              privateData.log.stream.write('\n') // whitespace for readability
+              privateData.log.stream.write(`Ready in:    ${formatDuration(elapsedTime)}\n`)
+              privateData.log.stream.write('\n') // whitespace for readability
+            }
+
             privateData.ready = true
             resolve()
           }
@@ -152,13 +254,19 @@ class Procmonrest {
           reject(err)
         }
 
-        if (privateData.log && privateData.log.stream) {
-          // code may be 0 (which is valid and should be reported), so do *not* evaluate that first
-          privateData.log.stream.write(`EXIT CODE: ${signal || code}\n`)
+        if (privateData.log) {
+          privateData.log.stream.write('\n') // whitespace for readability
+
+          if (privateData.forced && signal == null) {
+            // exit code may be 0 (which is valid and should be reported), so do *not* evaluate that first
+            privateData.log.stream.write('Exit code:   (forcibly terminated)\n')
+          } else {
+            privateData.log.stream.write(`Exit code:   ${signal || code}\n`)
+          }
+
           privateData.log.stream.end()
         }
 
-        privateData.ready = false
         privateData.subProcess = null
       })
     })
@@ -170,7 +278,8 @@ class Procmonrest {
    * @return {Boolean}
    */
   get isRunning () {
-    return _.get(this).ready
+    const privateData = _.get(this)
+    return (privateData.ready || false) && !privateData.forced
   }
 
   /**
@@ -182,23 +291,13 @@ class Procmonrest {
     const privateData = _.get(this)
 
     if (privateData && privateData.subProcess) {
-      debug('STOP: attempting to terminate process with id %d...', privateData.subProcess.pid)
+      debug('STOP: forcibly terminating process %d...', privateData.subProcess.pid)
+      privateData.forced = true
 
       try {
         await terminate(privateData.subProcess.pid)
         debug('STOP: ...done!')
-      } catch (err) {
-        const patternForMissingProcessId = /the process "\d+" not found/i
-
-        if (patternForMissingProcessId.test(err.message)) {
-          debug('STOP: ...process was not found')
-          throw new Error('There is nothing to stop. Please call start() first.')
-        } else {
-          debug('STOP: ...an error occurred ->', err.message)
-          throw err
-        }
       } finally {
-        privateData.ready = false
         privateData.subProcess = null
       }
     } else {

@@ -66,9 +66,8 @@ Instances of `Procmonrest` must be created using the `new` keyword.
 | Key | Type | Value |
 |-----|------|-------|
 | `command` | {String?} | The command to run (typically, whatever is used to start the local server). Defaults to `npm start`. |
-| `envars` | {Object?} | If specified, environment variables for the child process. Defaults to `{ NODE_ENV: 'test' }`. |
 | `reference` | {String?} | If specified, then this value will be noted inside the log file. |
-| `saveLogTo` | {String?} | If specified, then the `stdout` and `stderr` output of the child process will be saved to this location (instead of the default). It must be an absolute path spec including the file name. Use `null` or `false` to prevent the creation of a log file altogether. |
+| `saveLogTo` | {String?} | If specified, then the `stdout` and `stderr` output of the child process will be saved to this location (instead of the default), which must be an absolute path spec including the file name. Use `null` or `false` to prevent the creation of a log file altogether. |
 | `waitFor` | {RegExp} | A [regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) that each line of output from the child process will be tested against. As soon as a match is made, then the process will be considered "ready for testing". | 
 
 ### Properties
@@ -89,6 +88,12 @@ This spawns the child process, and resolves once the specified pattern is matche
 #### `stop` returns {Promise}
 
 This method calls [tree-kill](https://www.npmjs.com/package/tree-kill) on the child process, and resolves once that is complete. The promise will be rejected if the child process is not running.
+
+### Logging
+
+Each instance of `Procmonrest` saves all `stdout` and `stderr` output from the child process to a log file, along with some information about the process itself. The location of the log file defaults to the same as the file containing the code that creates the instance of `Procmonrest`, and the name will be the same as that file, but with the `.js` extension changed to `.log`. For example, if the file containing the code `new Procmonrest()` is located at `test/logging.spec.js`, then the log file will be created at `test/logging.spec.log`.
+
+Each run will create a new log file, and previous versions will be overwritten.
 
 ## Safety features
 

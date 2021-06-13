@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-* By default, the spawned child's `stdout` and `stderr` are saved to a log file in the same directory as the file that imports `Procmonrest`. The `saveLogTo` option can be used to override this behavior.
-* The `envars` option can be used to set environment variables for the child process.
+* The `saveLogTo` option can still be used to specify the location of the log file; however, it will now default to the same location as the file that calls `new Procmonrest()`.
+
 
 ## [1.0.0] - 2021-04-06
 

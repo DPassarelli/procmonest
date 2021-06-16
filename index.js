@@ -262,7 +262,10 @@ class Procmonrest {
             .toString()
             .split(/\r?\n/)
             .filter(line => line.length > 0)
-            .forEach(line => privateData.log.stream.write(`STDERR: ${line}\n`))
+            .forEach((line) => {
+              privateData.log.stream.write(`STDERR: ${line}\n`)
+              debug('STDERR: %s', line)
+            })
         }
       })
 

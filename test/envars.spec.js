@@ -2,10 +2,7 @@
 
 'use strict'
 
-const path = require('path')
-
 const request = require('got')
-const rmrf = require('del')
 
 /**
  * The code under test.
@@ -22,10 +19,6 @@ const ERR_INVALID_ENVARS = 'If specified, the "envars" option must be a plain ob
 
 describe('the environment variable functionality', () => {
   context('when the value of `envars` is not specified', () => {
-    before(() => {
-      return rmrf(path.join(__dirname, '*.log'))
-    })
-
     it('must include NODE_ENV=test by default', () => {
       const instance = new T({
         command: global.scriptCommands.server,
@@ -48,10 +41,6 @@ describe('the environment variable functionality', () => {
   })
 
   context('when the value of `envars` is specified', () => {
-    before(() => {
-      return rmrf(path.join(__dirname, '*.log'))
-    })
-
     describe('the constructor', () => {
       it('must throw an error when the value is not a plain object', () => {
         expect(() => {

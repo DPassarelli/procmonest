@@ -232,6 +232,8 @@ class Procmonrest {
             privateData.log.stream.write(`STDOUT: ${line}\n`)
           }
 
+          debug('STDOUT: %s', line)
+
           if (!privateData.ready && privateData.pattern.test(line)) {
             /**
              * The amount of time elapsed since the child process was started

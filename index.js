@@ -4,6 +4,7 @@ const path = require('path')
 
 const debug = require('debug')('procmonrest')
 const isPlainObject = require('is-plain-obj')
+const mergeObjects = require('lodash.merge')
 const terminate = require('tree-kill')
 
 /**
@@ -210,7 +211,7 @@ class Procmonrest {
       privateData.cmd,
       {
         cwd: workingDirectory,
-        env: privateData.env,
+        env: mergeObjects({}, process.env, privateData.env),
         shell: true,
         stdio: 'pipe'
       }
@@ -228,11 +229,11 @@ class Procmonrest {
           .filter(line => line.length > 0)
 
         lines.forEach((line) => {
+          debug('STDOUT: %s', line)
+
           if (privateData.log) {
             privateData.log.stream.write(`STDOUT: ${line}\n`)
           }
-
-          debug('STDOUT: %s', line)
 
           if (!privateData.ready && privateData.pattern.test(line)) {
             /**
@@ -263,8 +264,8 @@ class Procmonrest {
             .split(/\r?\n/)
             .filter(line => line.length > 0)
             .forEach((line) => {
-              privateData.log.stream.write(`STDERR: ${line}\n`)
               debug('STDERR: %s', line)
+              privateData.log.stream.write(`STDERR: ${line}\n`)
             })
         }
       })

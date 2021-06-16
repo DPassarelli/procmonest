@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 
 const debug = require('debug')('procmonrest')
+const isPlainObject = require('is-plain-obj')
 const terminate = require('tree-kill')
 
 /**
@@ -101,9 +102,26 @@ class Procmonrest {
 
     const privateData = {
       cmd: options.command || 'npm start',
+      env: {
+        NODE_ENV: 'test'
+      },
       log: false,
       pattern: options.waitFor,
       ref: options.reference
+    }
+
+    if (options.envars) {
+      if (!isPlainObject(options.envars)) {
+        throw new Error('If specified, the "envars" option must be a plain object containing only string values.')
+      }
+
+      Object.keys(options.envars).forEach((key) => {
+        if (typeof options.envars[key] !== 'string') {
+          throw new Error('If specified, the "envars" option must be a plain object containing only string values.')
+        }
+
+        privateData.env[key] = options.envars[key]
+      })
     }
 
     if (options.saveLogTo === undefined) {
@@ -192,6 +210,7 @@ class Procmonrest {
       privateData.cmd,
       {
         cwd: workingDirectory,
+        env: privateData.env,
         shell: true,
         stdio: 'pipe'
       }
@@ -230,7 +249,7 @@ class Procmonrest {
             }
 
             privateData.ready = true
-            resolve()
+            resolve(line)
           }
         })
       })

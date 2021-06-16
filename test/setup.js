@@ -7,17 +7,19 @@ chai.use(require('chai-as-promised'))
 
 global.scriptCommands = {
   /**
-   * [noError description]
+   * A script that starts, outputs the expected text to `stdout`, and then ends
+   * on its own.
    */
   runsNormally: `node ${path.join(__dirname, './scripts/sample.js')}`,
 
   /**
-   * [noError description]
+   * A script that exits before outputing the expected text.
    */
   exitsEarly: `node ${path.join(__dirname, './scripts/error.js')}`,
 
   /**
-   * [noError description]
+   * A script that starts, outputs the expected text to `stdout`, but does not
+   * end (meaning, it keeps the event loop running).
    */
-  doesNotExit: `node ${path.join(__dirname, './scripts/server.js')}`
+  server: `node ${path.join(__dirname, './scripts/server.js')}`
 }

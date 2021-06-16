@@ -97,6 +97,22 @@ describe('the Procmonrest module', () => {
       return expect(promise).to.be.fulfilled
     })
 
+    describe('the fulfillment value', () => {
+      it('must be the line of output that matched "waitFor"', () => {
+        const expected = 'ready for testing!'
+
+        const instance = new T({
+          command: global.scriptCommands.runsNormally,
+          waitFor: /ready/
+        })
+
+        return instance.start()
+          .then((actual) => {
+            expect(actual).to.equal(expected)
+          })
+      })
+    })
+
     context('when the child process terminates before the expected output is found', () => {
       let rejection = null
 

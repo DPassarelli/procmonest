@@ -366,7 +366,7 @@ describe('the logging functionality', () => {
         return rmrf(path.join(__dirname, '*.log'))
           .then(() => {
             instance = new T({
-              command: global.scriptCommands.doesNotExit,
+              command: global.scriptCommands.server,
               waitFor: /ready/
             })
 

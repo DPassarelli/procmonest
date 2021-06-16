@@ -4,6 +4,6 @@ global.setTimeout(() => {
   // no-op
 }, 500)
 
-console.log('ready')
+console.log('ready for testing!')
 console.log('this will appear on stdout')
 console.error('this will appear on stderr')

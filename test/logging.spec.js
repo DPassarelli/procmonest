@@ -56,46 +56,6 @@ describe('the logging functionality', () => {
     })
   })
 
-  context('when the value of `saveLogTo` is a valid file spec', () => {
-    /**
-     * The folder that the log file will be created in.
-     * @type {String}
-     */
-    let tempFolder = null
-
-    before(() => {
-      return fs.mkdtemp(path.join(os.tmpdir(), 'procmonrest-'))
-        .then((pathspec) => {
-          tempFolder = pathspec
-
-          const instance = new T({
-            command: global.scriptCommands.runsNormally,
-            waitFor: /ready/,
-            saveLogTo: path.join(tempFolder, 'test.log')
-          })
-
-          return instance
-            .start()
-            .then(() => {
-              return new Promise((resolve) => {
-                global.setTimeout(resolve, DELAY) // wait for process to exit on its own
-              })
-            })
-        })
-    })
-
-    after(() => {
-      return rmrf(tempFolder, { force: true })
-    })
-
-    it('must be created in the specified location', () => {
-      return fs.readdir(tempFolder)
-        .then((filenames) => {
-          expect(filenames).to.include('test.log')
-        })
-    })
-  })
-
   context('when the value of `saveLogTo` is `null`', () => {
     before(() => {
       return rmrf(path.join(__dirname, '*.log'))
@@ -150,6 +110,46 @@ describe('the logging functionality', () => {
         .then((filenames) => {
           const matchingFile = filenames.find((name) => /.+\.log$/.test(name))
           expect(matchingFile).to.be.undefined // eslint-disable-line no-unused-expressions
+        })
+    })
+  })
+
+  context('when the value of `saveLogTo` is a valid file spec', () => {
+    /**
+     * The folder that the log file will be created in.
+     * @type {String}
+     */
+    let tempFolder = null
+
+    before(() => {
+      return fs.mkdtemp(path.join(os.tmpdir(), 'procmonrest-'))
+        .then((pathspec) => {
+          tempFolder = pathspec
+
+          const instance = new T({
+            command: global.scriptCommands.runsNormally,
+            waitFor: /ready/,
+            saveLogTo: path.join(tempFolder, 'test.log')
+          })
+
+          return instance
+            .start()
+            .then(() => {
+              return new Promise((resolve) => {
+                global.setTimeout(resolve, DELAY) // wait for process to exit on its own
+              })
+            })
+        })
+    })
+
+    after(() => {
+      return rmrf(tempFolder, { force: true })
+    })
+
+    it('must be created in the specified location', () => {
+      return fs.readdir(tempFolder)
+        .then((filenames) => {
+          expect(filenames).to.include('test.log')
         })
     })
   })
@@ -247,6 +247,11 @@ describe('the logging functionality', () => {
 
       it('must contain the child process command', () => {
         const actual = logFileContents.find(line => line.includes(global.scriptCommands.runsNormally))
+        expect(actual).to.not.equal(undefined)
+      })
+
+      it('must contain the name of the test script', () => {
+        const actual = logFileContents.find(line => line.includes(__filename))
         expect(actual).to.not.equal(undefined)
       })
 

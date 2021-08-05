@@ -1,6 +1,6 @@
 {
   "name": "procmonrest",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A promise-based child process runner to ensure reliable testing of local servers written in JS.",
   "main": "index.js",
   "scripts": {
@@ -9,6 +9,9 @@
     "test": "npm run lint && nyc npm run test:unit",
     "test:unit": "mocha",
     "upload-coverage": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "engines": {
+    "node" : ">=10"
   },
   "repository": {
     "type": "git",

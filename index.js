@@ -102,6 +102,7 @@ class Procmonrest {
     }
 
     const privateData = {
+      caller: getFullPathOfCaller(),
       cmd: options.command || 'npm start',
       env: {
         NODE_ENV: 'test'
@@ -127,7 +128,7 @@ class Procmonrest {
 
     if (options.saveLogTo === undefined) {
       privateData.log = {
-        path: getFullPathOfCaller().replace(/\.js$/, '.log')
+        path: privateData.caller.replace(/\.js$/, '.log')
       }
     } else if (options.saveLogTo) {
       try {
@@ -190,8 +191,9 @@ class Procmonrest {
       privateData.log.stream.write('************************************\n')
       privateData.log.stream.write('*      STDOUT/STDERR LOG FILE      *\n')
       privateData.log.stream.write('************************************\n')
-      privateData.log.stream.write(`Command:     ${privateData.cmd}\n`)
-      privateData.log.stream.write(`Started at:  ${startTime.toLocaleString()}\n`)
+      privateData.log.stream.write(`Command:        ${privateData.cmd}\n`)
+      privateData.log.stream.write(`Initiated from: ${privateData.caller}\n`)
+      privateData.log.stream.write(`Started at:     ${startTime.toLocaleString()}\n`)
 
       if (privateData.ref) {
         privateData.log.stream.write(`Reference:   ${privateData.ref}\n`)
@@ -247,7 +249,7 @@ class Procmonrest {
 
             if (privateData.log) {
               privateData.log.stream.write('\n') // whitespace for readability
-              privateData.log.stream.write(`Ready in:    ${formatDuration(elapsedTime)}\n`)
+              privateData.log.stream.write(`Ready in:       ${formatDuration(elapsedTime)}\n`)
               privateData.log.stream.write('\n') // whitespace for readability
             }
 
@@ -284,9 +286,9 @@ class Procmonrest {
 
           if (privateData.forced && signal == null) {
             // exit code may be 0 (which is valid and should be reported), so do *not* evaluate that first
-            privateData.log.stream.write('Exit code:   (forcibly terminated)\n')
+            privateData.log.stream.write('Exit code:      (forcibly terminated)\n')
           } else {
-            privateData.log.stream.write(`Exit code:   ${signal || code}\n`)
+            privateData.log.stream.write(`Exit code:      ${signal || code}\n`)
           }
 
           privateData.log.stream.end()
